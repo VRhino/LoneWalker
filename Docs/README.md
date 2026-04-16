@@ -47,6 +47,12 @@ Transformar la exploración urbana en una aventura emocionante mediante:
 - **Ranking de Exploradores**: Clasificación por porcentaje descubierto y tesoros encontrados
 - **Control de Privacidad**: Opción de modo privado o ranking público
 
+### 6. **El Consejo de Exploradores: Hitos Comunitarios**
+- **Propuesta de Hitos**: Cualquier usuario puede proponer nuevos Puntos de Interés (POI) con foto y descripción
+- **Curación Social**: Sistema de votación democrática (+20 votos para aprobación permanente)
+- **Transparencia Total**: Todos los votos y comentarios públicos (estilo Reddit en calles de Madrid)
+- **Gamificación**: Puntos de "Cartógrafo" para propuestas aprobadas y curadores activos
+
 ## Guía de Características
 
 Para detalles específicos sobre cada característica, consulta:
@@ -55,6 +61,7 @@ Para detalles específicos sobre cada característica, consulta:
 - [Sistema de Radar y Tesoros](./features/treasure-hunt-radar.md)
 - [Sistema Social y Ranking](./features/social-system.md)
 - [Gestión de Privacidad](./features/privacy-settings.md)
+- [El Consejo de Exploradores](./features/community-landmarks.md)
 
 ## Arquitectura Técnica
 
