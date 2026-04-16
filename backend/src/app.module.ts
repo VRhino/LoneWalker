@@ -4,6 +4,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { typeOrmAsyncConfig } from './config/database.config';
+import { AuthModule } from './modules/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
 
 @Module({
   imports: [
@@ -12,13 +14,13 @@ import { typeOrmAsyncConfig } from './config/database.config';
       envFilePath: ['.env.local', '.env'],
     }),
     TypeOrmModule.forRootAsync(typeOrmAsyncConfig),
-    // Feature modules will be imported here in future phases
-    // AuthModule,
-    // UsersModule,
-    // ExplorationModule,
-    // TreasuresModule,
-    // LandmarksModule,
-    // RankingModule,
+    // Feature modules
+    AuthModule,
+    UsersModule,
+    // TBD: ExplorationModule,
+    // TBD: TreasuresModule,
+    // TBD: LandmarksModule,
+    // TBD: RankingModule,
   ],
   controllers: [AppController],
   providers: [AppService],
