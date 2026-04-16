@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { typeOrmAsyncConfig } from './config/database.config';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
+import { ExplorationModule } from './modules/exploration/exploration.module';
 
 @Module({
   imports: [
@@ -17,7 +18,7 @@ import { UsersModule } from './modules/users/users.module';
     // Feature modules
     AuthModule,
     UsersModule,
-    // TBD: ExplorationModule,
+    ExplorationModule,
     // TBD: TreasuresModule,
     // TBD: LandmarksModule,
     // TBD: RankingModule,
