@@ -1,0 +1,74 @@
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+pubspec.lock
+
+# Testing
+/coverage
+.nyc_output
+
+# Production
+/build
+/dist
+/flutter_build
+
+# Misc
+.DS_Store
+.env
+.env.local
+.env.*.local
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.sublime-project
+.sublime-workspace
+*.iml
+.Android
+.gradle
+.classpath
+.project
+.settings
+*.ipr
+xcuserdata/
+DerivedData/
+.packages
+.dart_tool
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Environment specific
+.env.production
+.env.staging
+.env.development
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Backend specific
+backend/dist/
+backend/node_modules/
+backend/.env
+backend/postgres_data/
+
+# Frontend specific
+frontend/build/
+frontend/.dart_tool/
+frontend/pubspec.lock
+
+# GCP
+.gcloud/
+*-firebase-key.json
+service-account-key.json
+
+# Docker
+.dockerignore

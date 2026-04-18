@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  # ============================================
+  # PostgreSQL - Main Database
+  # ============================================
+  postgres:
+    image: postgres:14-alpine
+    container_name: lonewalker-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME:-lonewalker_dev}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - lonewalker-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ============================================
+  # Redis - Cache & Session Store
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: lonewalker-redis
+    command: redis-server --appendonly yes
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - lonewalker-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ============================================
+  # pgAdmin - PostgreSQL Web Admin
+  # (Development only - remove in production)
+  # ============================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: lonewalker-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+    ports:
+      - "5050:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - lonewalker-network
+    restart: unless-stopped
+    profiles:
+      - dev
+
+  # ============================================
+  # NestJS Backend (Local Development)
+  # ============================================
+  # Uncomment to run backend in Docker
+  # backend:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #   container_name: lonewalker-backend
+  #   environment:
+  #     - NODE_ENV=${NODE_ENV:-development}
+  #     - DB_HOST=postgres
+  #     - DB_PORT=5432
+  #     - DB_NAME=${DB_NAME:-lonewalker_dev}
+  #     - DB_USER=${DB_USER:-postgres}
+  #     - DB_PASSWORD=${DB_PASSWORD:-postgres}
+  #     - REDIS_HOST=redis
+  #     - REDIS_PORT=6379
+  #   ports:
+  #     - "${PORT:-3000}:3000"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   networks:
+  #     - lonewalker-network
+  #   volumes:
+  #     - ./backend/src:/app/src
+  #   command: npm run start:dev
+  #   restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  lonewalker-network:
+    driver: bridge
