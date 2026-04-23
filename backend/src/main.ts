@@ -57,7 +57,7 @@ async function bootstrap() {
   `);
 }
 
-bootstrap().catch((err) => {
+bootstrap().catch(err => {
   console.error('Bootstrap error:', err);
   process.exit(1);
 });

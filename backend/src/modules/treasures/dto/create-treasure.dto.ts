@@ -1,4 +1,12 @@
-import { IsString, IsNumber, IsOptional, IsEnum, Length, Min, Max } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsEnum,
+  Length,
+  Min,
+  Max,
+} from 'class-validator';
 import { TreasureRarity } from '../entities/treasure.entity';
 
 export class CreateTreasureDto {

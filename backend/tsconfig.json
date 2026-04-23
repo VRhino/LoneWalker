@@ -24,6 +24,7 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "strict": true,
+    "strictPropertyInitialization": false,
     "moduleResolution": "node"
   },
   "include": ["src"],

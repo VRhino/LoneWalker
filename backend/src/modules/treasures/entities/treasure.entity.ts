@@ -75,11 +75,9 @@ export class TreasureEntity {
   @Column('varchar', { length: 500, nullable: true })
   stl_file_url: string;
 
-  @OneToMany(
-    () => TreasureClaimEntity,
-    (claim) => claim.treasure,
-    { eager: false },
-  )
+  @OneToMany(() => TreasureClaimEntity, claim => claim.treasure, {
+    eager: false,
+  })
   claims: TreasureClaimEntity[];
 
   @CreateDateColumn()

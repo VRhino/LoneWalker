@@ -3,7 +3,6 @@ import {
   Post,
   Body,
   UseGuards,
-  Req,
   HttpCode,
   HttpStatus,
   Get,
@@ -13,12 +12,15 @@ import {
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
-  ApiBody,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { RefreshTokenDto, AuthResponseDto, TokenResponseDto } from './dto/auth-response.dto';
+import {
+  RefreshTokenDto,
+  AuthResponseDto,
+  TokenResponseDto,
+} from './dto/auth-response.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
@@ -81,7 +83,10 @@ export class AuthController {
     // In a real app, you'd get userId from the refresh token payload
     // For now, we'll extract it from the token
     const decoded = JSON.parse(
-      Buffer.from(refreshTokenDto.refresh_token.split('.')[1], 'base64').toString(),
+      Buffer.from(
+        refreshTokenDto.refresh_token.split('.')[1],
+        'base64',
+      ).toString(),
     );
     return await this.authService.refreshToken(
       decoded.sub,

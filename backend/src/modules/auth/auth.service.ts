@@ -137,7 +137,7 @@ export class AuthService {
       { sub: userId },
       {
         secret: this.configService.get<string>('JWT_SECRET'),
-        expiresIn: this.configService.get<string>('JWT_EXPIRATION', '3600s'),
+        expiresIn: this.configService.get<number>('JWT_EXPIRATION', 3600),
         algorithm: 'HS256',
       },
     );
@@ -163,7 +163,7 @@ export class AuthService {
       { sub: userId },
       {
         secret: this.configService.get<string>('JWT_SECRET'),
-        expiresIn: this.configService.get<string>('JWT_EXPIRATION', '3600s'),
+        expiresIn: this.configService.get<number>('JWT_EXPIRATION', 3600),
         algorithm: 'HS256',
       },
     );
@@ -172,9 +172,9 @@ export class AuthService {
       { sub: userId, type: 'refresh' },
       {
         secret: this.configService.get<string>('JWT_SECRET'),
-        expiresIn: this.configService.get<string>(
+        expiresIn: this.configService.get<number>(
           'REFRESH_TOKEN_EXPIRATION',
-          '604800s',
+          604800,
         ),
         algorithm: 'HS256',
       },

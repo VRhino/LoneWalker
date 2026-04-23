@@ -7,7 +7,6 @@ import {
   Query,
   HttpCode,
   HttpStatus,
-  Param,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -18,7 +17,7 @@ import {
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ExplorationService } from './services/exploration.service';
-import { CreateExplorationDto } from './dto/create-exploration.dto.ts';
+import { CreateExplorationDto } from './dto/create-exploration.dto';
 import {
   ExplorationProgressDto,
   FogOfWarDto,

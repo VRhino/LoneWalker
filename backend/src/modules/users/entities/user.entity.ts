@@ -55,7 +55,7 @@ export class UserEntity {
   is_active: boolean;
 
   @Column({ type: 'varchar', nullable: true })
-  refresh_token_hash: string;
+  refresh_token_hash: string | null;
 
   @CreateDateColumn()
   created_at: Date;

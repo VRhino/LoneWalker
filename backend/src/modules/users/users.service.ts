@@ -86,7 +86,10 @@ export class UsersService {
       tokenHash = await bcrypt.hash(token, salt);
     }
 
-    await this.usersRepository.update({ id }, { refresh_token_hash: tokenHash });
+    await this.usersRepository.update(
+      { id },
+      { refresh_token_hash: tokenHash },
+    );
   }
 
   /**
@@ -106,10 +109,7 @@ export class UsersService {
    * Update last login timestamp
    */
   async updateLastLogin(id: string): Promise<void> {
-    await this.usersRepository.update(
-      { id },
-      { last_login_at: new Date() },
-    );
+    await this.usersRepository.update({ id }, { last_login_at: new Date() });
   }
 
   /**

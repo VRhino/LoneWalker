@@ -6,7 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ExplorationEntity } from '../entities/exploration.entity';
-import { CreateExplorationDto } from '../dto/create-exploration.dto.ts';
+import { CreateExplorationDto } from '../dto/create-exploration.dto';
 import { ExplorationProgressDto } from '../dto/exploration-response.dto';
 import { UsersService } from '../../users/users.service';
 
@@ -71,12 +71,8 @@ export class ExplorationService {
 
     // Calculate new exploration areas (simplified)
     // In production, use PostGIS ST_Union, ST_Area, etc.
-    const newAreaPercent = this.calculateNewAreas(
-      user.exploration_percent,
-    );
-    const xpEarned = Math.floor(
-      newAreaPercent * this.BASE_XP_EXPLORATION,
-    );
+    const newAreaPercent = this.calculateNewAreas(user.exploration_percent);
+    const xpEarned = Math.floor(newAreaPercent * this.BASE_XP_EXPLORATION);
 
     // Update user stats
     const newExplorationPercent = Math.min(
@@ -104,7 +100,9 @@ export class ExplorationService {
   /**
    * Get user's exploration progress
    */
-  async getExplorationProgress(userId: string): Promise<ExplorationProgressDto> {
+  async getExplorationProgress(
+    userId: string,
+  ): Promise<ExplorationProgressDto> {
     const user = await this.usersService.findById(userId);
 
     if (!user) {
@@ -149,10 +147,10 @@ export class ExplorationService {
     );
 
     // Build GeoJSON FeatureCollection
-    const features = explorations.map((exp) => ({
-      type: 'Feature',
+    const features = (explorations as Array<{ latitude: number; longitude: number; explored_at: string }>).map(exp => ({
+      type: 'Feature' as const,
       geometry: {
-        type: 'Point',
+        type: 'Point' as const,
         coordinates: [exp.longitude, exp.latitude],
       },
       properties: {
@@ -164,7 +162,7 @@ export class ExplorationService {
 
     return {
       fog_of_war: {
-        type: 'FeatureCollection',
+        type: 'FeatureCollection' as const,
         features,
       },
       points_of_interest: await this.getNearbyPOIs(latitude, longitude),
@@ -189,14 +187,12 @@ export class ExplorationService {
   /**
    * Get district-level exploration stats
    */
-  private async getDistrictExploration(
-    userId: string,
-  ): Promise<
+  private async getDistrictExploration(_userId: string): Promise<
     Array<{
       district_id: string;
       name: string;
       exploration_percent: number;
-      mastery_level: string;
+      mastery_level: 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM';
     }>
   > {
     // Simplified: return empty for now
@@ -206,7 +202,7 @@ export class ExplorationService {
         district_id: 'madrid_001',
         name: 'Centro Histórico',
         exploration_percent: 45.3,
-        mastery_level: 'SILVER',
+        mastery_level: 'SILVER' as const,
       },
     ];
   }
@@ -217,7 +213,7 @@ export class ExplorationService {
   private async getNearbyPOIs(
     latitude: number,
     longitude: number,
-    radiusMeters: number = 5000,
+    _radiusMeters: number = 5000,
   ): Promise<
     Array<{
       id: string;
@@ -284,7 +280,7 @@ export class ExplorationService {
 
     // Filter by date
     const filtered = explorations.filter(
-      (e) => e.explored_at >= startDate && e.explored_at <= endDate,
+      e => e.explored_at >= startDate && e.explored_at <= endDate,
     );
 
     return {

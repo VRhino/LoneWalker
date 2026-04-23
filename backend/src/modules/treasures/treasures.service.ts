@@ -1,10 +1,22 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { TreasureEntity, TreasureStatus, TreasureRarity } from './entities/treasure.entity';
+import {
+  TreasureEntity,
+  TreasureStatus,
+  TreasureRarity,
+} from './entities/treasure.entity';
 import { TreasureClaimEntity } from './entities/treasure-claim.entity';
 import { CreateTreasureDto } from './dto/create-treasure.dto';
-import { TreasureDto, TreasurerRadarDto, TreasureWallOfFameDto } from './dto/treasure-response.dto';
+import {
+  TreasureDto,
+  TreasurerRadarDto,
+  TreasureWallOfFameDto,
+} from './dto/treasure-response.dto';
 
 @Injectable()
 export class TreasuresService {
@@ -48,29 +60,26 @@ export class TreasuresService {
   ): Promise<TreasureDto[]> {
     const treasures = await this.treasureRepository
       .createQueryBuilder('t')
-      .where(
-        `ST_DWithin(t.location, ST_MakePoint(:lng, :lat), :radius)`,
-        {
-          lat: userLat,
-          lng: userLng,
-          radius,
-        },
-      )
+      .where(`ST_DWithin(t.location, ST_MakePoint(:lng, :lat), :radius)`, {
+        lat: userLat,
+        lng: userLng,
+        radius,
+      })
       .andWhere('t.status = :status', { status: TreasureStatus.ACTIVE })
-      .orderBy(
-        `ST_Distance(t.location, ST_MakePoint(:lng, :lat))`,
-        'ASC',
-      )
+      .orderBy(`ST_Distance(t.location, ST_MakePoint(:lng, :lat))`, 'ASC')
       .setParameters({ lat: userLat, lng: userLng })
       .getMany();
 
-    return Promise.all(
-      treasures.map((t) => this.mapToDto(t, userId)),
-    );
+    return Promise.all(treasures.map(t => this.mapToDto(t, userId)));
   }
 
-  async getTreasureById(treasureId: string, userId?: string): Promise<TreasureDto> {
-    const treasure = await this.treasureRepository.findOneBy({ id: treasureId });
+  async getTreasureById(
+    treasureId: string,
+    userId?: string,
+  ): Promise<TreasureDto> {
+    const treasure = await this.treasureRepository.findOneBy({
+      id: treasureId,
+    });
     if (!treasure) {
       throw new NotFoundException('Treasure not found');
     }
@@ -89,7 +98,7 @@ export class TreasuresService {
       userId,
     );
 
-    return treasures.map((treasure) => {
+    return treasures.map(treasure => {
       const distance = this.calculateDistance(
         userLat,
         userLng,
@@ -112,10 +121,7 @@ export class TreasuresService {
         ),
         proximity_percent: Math.min(
           100,
-          Math.max(
-            0,
-            100 - (distance / this.TREASURE_ACTIVATION_RADIUS) * 100,
-          ),
+          Math.max(0, 100 - (distance / this.TREASURE_ACTIVATION_RADIUS) * 100),
         ),
         can_claim: distance <= this.TREASURE_CLAIM_RADIUS,
       };
@@ -129,7 +135,9 @@ export class TreasuresService {
     userLng: number,
     userAccuracy: number,
   ): Promise<{ treasure: TreasureDto; xpEarned: number; claimed: boolean }> {
-    const treasure = await this.treasureRepository.findOneBy({ id: treasureId });
+    const treasure = await this.treasureRepository.findOneBy({
+      id: treasureId,
+    });
     if (!treasure) {
       throw new NotFoundException('Treasure not found');
     }
@@ -167,7 +175,10 @@ export class TreasuresService {
     }
 
     const baseXp = this.XP_BASE_REWARDS[treasure.rarity] || 50;
-    const distanceBonus = Math.max(0, (this.TREASURE_CLAIM_RADIUS - distance) / this.TREASURE_CLAIM_RADIUS);
+    const distanceBonus = Math.max(
+      0,
+      (this.TREASURE_CLAIM_RADIUS - distance) / this.TREASURE_CLAIM_RADIUS,
+    );
     const accuracyBonus = (50 - userAccuracy) / 50;
     const xpMultiplier = 1 + (distanceBonus * 0.2 + accuracyBonus * 0.1);
     const xpEarned = Math.round(baseXp * xpMultiplier);
@@ -197,7 +208,9 @@ export class TreasuresService {
     };
   }
 
-  async getTreasureWallOfFame(treasureId: string): Promise<TreasureWallOfFameDto[]> {
+  async getTreasureWallOfFame(
+    treasureId: string,
+  ): Promise<TreasureWallOfFameDto[]> {
     const claims = await this.claimRepository
       .createQueryBuilder('tc')
       .leftJoinAndSelect('tc.user', 'u')
@@ -206,7 +219,7 @@ export class TreasuresService {
       .limit(50)
       .getMany();
 
-    return claims.map((claim) => ({
+    return claims.map(claim => ({
       id: claim.user.id,
       username: claim.user.username,
       claimed_at: claim.claimed_at,
@@ -237,7 +250,7 @@ export class TreasuresService {
 
     let totalXp = 0;
 
-    claims.forEach((claim) => {
+    claims.forEach(claim => {
       byRarity[claim.treasure.rarity]++;
       totalXp += claim.xp_earned;
     });
@@ -249,7 +262,12 @@ export class TreasuresService {
     };
   }
 
-  private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  private calculateDistance(
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number,
+  ): number {
     const R = 6371000;
     const φ1 = (lat1 * Math.PI) / 180;
     const φ2 = (lat2 * Math.PI) / 180;
@@ -264,21 +282,28 @@ export class TreasuresService {
     return R * c;
   }
 
-  private calculateBearing(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  private calculateBearing(
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number,
+  ): number {
     const φ1 = (lat1 * Math.PI) / 180;
     const φ2 = (lat2 * Math.PI) / 180;
     const Δλ = ((lon2 - lon1) * Math.PI) / 180;
 
     const y = Math.sin(Δλ) * Math.cos(φ2);
     const x =
-      Math.cos(φ1) * Math.sin(φ2) -
-      Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+      Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
     const θ = Math.atan2(y, x);
 
-    return (((θ * 180) / Math.PI + 360) % 360);
+    return ((θ * 180) / Math.PI + 360) % 360;
   }
 
-  private async mapToDto(treasure: TreasureEntity, userId?: string): Promise<TreasureDto> {
+  private async mapToDto(
+    treasure: TreasureEntity,
+    userId?: string,
+  ): Promise<TreasureDto> {
     let claimed = false;
     if (userId) {
       claimed = !!(await this.claimRepository.findOneBy({
@@ -297,7 +322,9 @@ export class TreasuresService {
       rarity: treasure.rarity,
       max_uses: treasure.max_uses,
       current_uses: treasure.current_uses,
-      uses_remaining: treasure.max_uses ? treasure.max_uses - treasure.current_uses : null,
+      uses_remaining: treasure.max_uses
+        ? treasure.max_uses - treasure.current_uses
+        : 0,
       photo_url: treasure.photo_url,
       stl_file_url: treasure.stl_file_url,
       claimed_by_user: claimed,

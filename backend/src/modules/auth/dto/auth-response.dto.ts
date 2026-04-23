@@ -63,6 +63,26 @@ export class UserResponseDto {
   updated_at: Date;
 }
 
+export class TokensDto {
+  @ApiProperty({
+    example: 'eyJhbGc...',
+    description: 'JWT access token',
+  })
+  access_token: string;
+
+  @ApiProperty({
+    example: 'eyJhbGc...',
+    description: 'JWT refresh token',
+  })
+  refresh_token: string;
+
+  @ApiProperty({
+    example: 3600,
+    description: 'Token expiration in seconds',
+  })
+  expires_in: number;
+}
+
 export class AuthResponseDto {
   @ApiProperty({
     description: 'User information',
@@ -71,26 +91,9 @@ export class AuthResponseDto {
 
   @ApiProperty({
     description: 'Authentication tokens',
+    type: TokensDto,
   })
-  tokens: {
-    @ApiProperty({
-      example: 'eyJhbGc...',
-      description: 'JWT access token',
-    })
-    access_token: string;
-
-    @ApiProperty({
-      example: 'eyJhbGc...',
-      description: 'JWT refresh token',
-    })
-    refresh_token: string;
-
-    @ApiProperty({
-      example: 3600,
-      description: 'Token expiration in seconds',
-    })
-    expires_in: number;
-  };
+  tokens: TokensDto;
 }
 
 export class RefreshTokenDto {

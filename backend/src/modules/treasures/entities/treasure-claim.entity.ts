@@ -28,7 +28,7 @@ export class TreasureClaimEntity {
   @Column('uuid')
   treasure_id: string;
 
-  @ManyToOne(() => TreasureEntity, (treasure) => treasure.claims)
+  @ManyToOne(() => TreasureEntity, treasure => treasure.claims)
   treasure: TreasureEntity;
 
   @Column('int')
