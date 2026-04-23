@@ -8,6 +8,7 @@ import {
   Index,
 } from 'typeorm';
 import { UserEntity } from '../../users/entities/user.entity';
+import { SRID_WGS84 } from '../../../common/constants/geo.constants';
 
 @Entity('exploration')
 @Index('idx_exploration_user_id', ['user_id'])
@@ -43,7 +44,7 @@ export class ExplorationEntity {
   // CREATE EXTENSION IF NOT EXISTS postgis;
   @Column('geometry', {
     spatialFeatureType: 'Point',
-    srid: 4326,
+    srid: SRID_WGS84,
     nullable: true,
   })
   location: string; // GeoJSON Point

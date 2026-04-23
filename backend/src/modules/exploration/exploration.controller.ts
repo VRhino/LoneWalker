@@ -7,6 +7,9 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  DefaultValuePipe,
+  ParseIntPipe,
+  ParseFloatPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -22,9 +25,13 @@ import {
   ExplorationProgressDto,
   FogOfWarDto,
 } from './dto/exploration-response.dto';
+import { DEFAULT_SEARCH_RADIUS_M } from '../../common/constants/geo.constants';
+import { SWAGGER_BEARER_SECURITY_KEY } from '../../common/constants/app.constants';
+
+const DEFAULT_PAGE_LIMIT = 50;
 
 @ApiTags('Exploration')
-@ApiBearerAuth('jwt')
+@ApiBearerAuth(SWAGGER_BEARER_SECURITY_KEY)
 @UseGuards(JwtAuthGuard)
 @Controller('api/v1/exploration')
 export class ExplorationController {
@@ -34,12 +41,12 @@ export class ExplorationController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Register exploration point' })
   @ApiResponse({
-    status: 201,
+    status: HttpStatus.CREATED,
     description: 'Exploration registered successfully',
     type: ExplorationProgressDto,
   })
   @ApiResponse({
-    status: 400,
+    status: HttpStatus.BAD_REQUEST,
     description: 'Speed limit exceeded or GPS accuracy too low',
   })
   async registerExploration(
@@ -55,7 +62,7 @@ export class ExplorationController {
   @Get('progress')
   @ApiOperation({ summary: 'Get exploration progress' })
   @ApiResponse({
-    status: 200,
+    status: HttpStatus.OK,
     description: 'Current exploration progress',
     type: ExplorationProgressDto,
   })
@@ -68,28 +75,33 @@ export class ExplorationController {
   @Get('map')
   @ApiOperation({ summary: 'Get map with fog of war' })
   @ApiResponse({
-    status: 200,
+    status: HttpStatus.OK,
     description: 'Map data with explored areas',
     type: FogOfWarDto,
   })
   async getMapWithFog(
     @CurrentUser('id') userId: string,
-    @Query('lat') latitude: string,
-    @Query('lng') longitude: string,
-    @Query('radius') radius?: string,
+    @Query('lat', ParseFloatPipe) latitude: number,
+    @Query('lng', ParseFloatPipe) longitude: number,
+    @Query(
+      'radius',
+      new DefaultValuePipe(DEFAULT_SEARCH_RADIUS_M),
+      ParseIntPipe,
+    )
+    radius: number,
   ): Promise<FogOfWarDto> {
     return await this.explorationService.getMapWithFog(
       userId,
-      parseFloat(latitude),
-      parseFloat(longitude),
-      radius ? parseInt(radius) : 5000,
+      latitude,
+      longitude,
+      radius,
     );
   }
 
   @Get('last')
   @ApiOperation({ summary: 'Get last exploration' })
   @ApiResponse({
-    status: 200,
+    status: HttpStatus.OK,
     description: 'Last exploration point',
     schema: {
       example: {
@@ -108,25 +120,26 @@ export class ExplorationController {
   @Get('history')
   @ApiOperation({ summary: 'Get exploration history' })
   @ApiResponse({
-    status: 200,
+    status: HttpStatus.OK,
     description: 'Exploration history with pagination',
   })
   async getHistory(
     @CurrentUser('id') userId: string,
-    @Query('limit') limit?: string,
-    @Query('offset') offset?: string,
+    @Query('limit', new DefaultValuePipe(DEFAULT_PAGE_LIMIT), ParseIntPipe)
+    limit: number,
+    @Query('offset', new DefaultValuePipe(0), ParseIntPipe) offset: number,
   ) {
     return await this.explorationService.getExplorationHistory(
       userId,
-      limit ? parseInt(limit) : 50,
-      offset ? parseInt(offset) : 0,
+      limit,
+      offset,
     );
   }
 
   @Get('stats')
   @ApiOperation({ summary: 'Get exploration statistics' })
   @ApiResponse({
-    status: 200,
+    status: HttpStatus.OK,
     description: 'Exploration statistics',
   })
   async getStats(

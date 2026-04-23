@@ -2,7 +2,13 @@
   "permissions": {
     "allow": [
       "Bash(pnpm run *)",
-      "Bash(pnpm install *)"
+      "Bash(pnpm install *)",
+      "Bash(sed 's/.*\\\\.//')",
+      "Bash(python -c \"import graphify\")",
+      "Bash(pip install *)",
+      "Bash(python -c \"import sys; open\\('.graphify_python', 'w'\\).write\\(sys.executable\\)\")",
+      "Bash(python -c ' *)",
+      "Bash(python *)"
     ]
   }
 }

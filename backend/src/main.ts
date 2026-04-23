@@ -1,20 +1,23 @@
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
+import {
+  DEFAULT_APP_PORT,
+  SWAGGER_DOCS_PATH,
+  SWAGGER_BEARER_SECURITY_KEY,
+} from './common/constants/app.constants';
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-
-  // Middleware
+function configureMiddleware(app: INestApplication): void {
   app.use(helmet());
   app.enableCors({
     origin: process.env.CORS_ORIGIN?.split(',') || '*',
     credentials: process.env.CORS_CREDENTIALS === 'true',
   });
+}
 
-  // Global validation pipe
+function configureValidation(app: INestApplication): void {
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -22,15 +25,16 @@ async function bootstrap() {
       transform: true,
     }),
   );
+}
 
-  // Swagger documentation
+function configureSwagger(app: INestApplication): void {
   const config = new DocumentBuilder()
     .setTitle('LoneWalker API')
     .setDescription('GPS-based exploration gamification API')
     .setVersion('0.1.0')
     .addBearerAuth(
       { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
-      'jwt',
+      SWAGGER_BEARER_SECURITY_KEY,
     )
     .addTag('Auth', 'Authentication endpoints')
     .addTag('Exploration', 'Map and exploration endpoints')
@@ -40,21 +44,33 @@ async function bootstrap() {
     .addTag('Users', 'User profile endpoints')
     .build();
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  SwaggerModule.setup(
+    SWAGGER_DOCS_PATH,
+    app,
+    SwaggerModule.createDocument(app, config),
+  );
+}
 
-  const port = process.env.PORT || 3000;
-  await app.listen(port);
-
+function printStartupBanner(port: number | string): void {
   console.log(`
 ╔════════════════════════════════════════╗
-║   LoneWalker Backend - Started! 🗺️      ║
+║   LoneWalker Backend - Started!        ║
 ╠════════════════════════════════════════╣
 ║  Server: http://localhost:${port}
-║  API Docs: http://localhost:${port}/api/docs
+║  API Docs: http://localhost:${port}/${SWAGGER_DOCS_PATH}
 ║  Environment: ${process.env.NODE_ENV}
 ╚════════════════════════════════════════╝
   `);
+}
+
+async function bootstrap(): Promise<void> {
+  const app = await NestFactory.create(AppModule);
+  configureMiddleware(app);
+  configureValidation(app);
+  configureSwagger(app);
+  const port = process.env.PORT ?? DEFAULT_APP_PORT;
+  await app.listen(port);
+  printStartupBanner(port);
 }
 
 bootstrap().catch(err => {

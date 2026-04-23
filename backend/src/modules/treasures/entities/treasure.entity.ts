@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { UserEntity } from '../../users/entities/user.entity';
 import { TreasureClaimEntity } from './treasure-claim.entity';
+import { SRID_WGS84 } from '../../../common/constants/geo.constants';
 
 export enum TreasureStatus {
   ACTIVE = 'ACTIVE',
@@ -88,7 +89,7 @@ export class TreasureEntity {
 
   @Column('geometry', {
     spatialFeatureType: 'Point',
-    srid: 4326,
+    srid: SRID_WGS84,
     nullable: true,
   })
   location: string;

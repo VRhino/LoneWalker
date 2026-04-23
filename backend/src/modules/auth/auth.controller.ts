@@ -23,6 +23,9 @@ import {
 } from './dto/auth-response.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { AuthenticatedUser } from '../../common/interfaces/authenticated-user.interface';
+import { ERROR_MESSAGES } from '../../common/constants/error-messages.constants';
+import { SWAGGER_BEARER_SECURITY_KEY } from '../../common/constants/app.constants';
 
 @ApiTags('Auth')
 @Controller('api/v1/auth')
@@ -33,16 +36,16 @@ export class AuthController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({
-    status: 201,
+    status: HttpStatus.CREATED,
     description: 'User registered successfully',
     type: AuthResponseDto,
   })
   @ApiResponse({
-    status: 400,
+    status: HttpStatus.BAD_REQUEST,
     description: 'Invalid input or passwords do not match',
   })
   @ApiResponse({
-    status: 409,
+    status: HttpStatus.CONFLICT,
     description: 'Email or username already exists',
   })
   async register(@Body() registerDto: RegisterDto): Promise<AuthResponseDto> {
@@ -53,12 +56,12 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login user' })
   @ApiResponse({
-    status: 200,
+    status: HttpStatus.OK,
     description: 'Login successful',
     type: AuthResponseDto,
   })
   @ApiResponse({
-    status: 401,
+    status: HttpStatus.UNAUTHORIZED,
     description: 'Invalid email or password',
   })
   async login(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
@@ -69,60 +72,49 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Refresh access token' })
   @ApiResponse({
-    status: 200,
+    status: HttpStatus.OK,
     description: 'Token refreshed successfully',
     type: TokenResponseDto,
   })
   @ApiResponse({
-    status: 401,
+    status: HttpStatus.UNAUTHORIZED,
     description: 'Invalid refresh token',
   })
   async refreshToken(
     @Body() refreshTokenDto: RefreshTokenDto,
   ): Promise<TokenResponseDto> {
-    // In a real app, you'd get userId from the refresh token payload
-    // For now, we'll extract it from the token
-    const decoded = JSON.parse(
-      Buffer.from(
-        refreshTokenDto.refresh_token.split('.')[1],
-        'base64',
-      ).toString(),
-    );
-    return await this.authService.refreshToken(
-      decoded.sub,
-      refreshTokenDto.refresh_token,
-    );
+    return await this.authService.refreshToken(refreshTokenDto.refresh_token);
   }
 
   @Post('logout')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth('jwt')
+  @ApiBearerAuth(SWAGGER_BEARER_SECURITY_KEY)
   @ApiOperation({ summary: 'Logout user' })
   @ApiResponse({
-    status: 200,
-    description: 'Logged out successfully',
-    schema: { example: { message: 'Logged out successfully' } },
+    status: HttpStatus.OK,
+    description: ERROR_MESSAGES.LOGGED_OUT,
+    schema: { example: { message: ERROR_MESSAGES.LOGGED_OUT } },
   })
   async logout(@CurrentUser('id') userId: string) {
     await this.authService.logout(userId);
-    return { message: 'Logged out successfully' };
+    return { message: ERROR_MESSAGES.LOGGED_OUT };
   }
 
   @Get('verify')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('jwt')
+  @ApiBearerAuth(SWAGGER_BEARER_SECURITY_KEY)
   @ApiOperation({ summary: 'Verify JWT token' })
   @ApiResponse({
-    status: 200,
+    status: HttpStatus.OK,
     description: 'Token is valid',
     schema: { example: { valid: true } },
   })
   @ApiResponse({
-    status: 401,
+    status: HttpStatus.UNAUTHORIZED,
     description: 'Invalid or expired token',
   })
-  async verify(@CurrentUser() user: any) {
+  async verify(@CurrentUser() user: AuthenticatedUser) {
     return { valid: true, user };
   }
 }

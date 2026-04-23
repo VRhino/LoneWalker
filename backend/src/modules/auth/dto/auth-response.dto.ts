@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { JWT_DEFAULT_EXPIRATION_S } from '../../../common/constants/auth.constants';
 
 export class UserResponseDto {
   @ApiProperty({
@@ -77,7 +78,7 @@ export class TokensDto {
   refresh_token: string;
 
   @ApiProperty({
-    example: 3600,
+    example: JWT_DEFAULT_EXPIRATION_S,
     description: 'Token expiration in seconds',
   })
   expires_in: number;
@@ -112,7 +113,7 @@ export class TokenResponseDto {
   access_token: string;
 
   @ApiProperty({
-    example: 3600,
+    example: JWT_DEFAULT_EXPIRATION_S,
     description: 'Token expiration in seconds',
   })
   expires_in: number;

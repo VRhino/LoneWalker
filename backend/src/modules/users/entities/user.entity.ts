@@ -6,6 +6,8 @@ import {
   UpdateDateColumn,
   Unique,
 } from 'typeorm';
+import { PrivacyMode } from '../../../common/enums/privacy-mode.enum';
+import { USERNAME_MAX_LENGTH } from '../../../common/constants/validation.constants';
 
 @Entity('users')
 @Unique(['email'])
@@ -14,7 +16,7 @@ export class UserEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ type: 'varchar', length: USERNAME_MAX_LENGTH })
   username: string;
 
   @Column({ type: 'varchar', length: 100 })
@@ -32,10 +34,10 @@ export class UserEntity {
   @Column({
     type: 'varchar',
     length: 20,
-    default: 'PUBLIC',
-    enum: ['PUBLIC', 'PRIVATE'],
+    default: PrivacyMode.PUBLIC,
+    enum: PrivacyMode,
   })
-  privacy_mode: 'PUBLIC' | 'PRIVATE';
+  privacy_mode: PrivacyMode;
 
   @Column({
     type: 'numeric',

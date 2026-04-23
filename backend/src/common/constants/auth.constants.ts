@@ -1,0 +1,10 @@
+export const JWT_ALGORITHM = 'HS256' as const;
+export const JWT_SECRET_KEY = 'JWT_SECRET';
+export const JWT_EXPIRATION_KEY = 'JWT_EXPIRATION';
+export const REFRESH_TOKEN_EXPIRATION_KEY = 'REFRESH_TOKEN_EXPIRATION';
+export const JWT_DEFAULT_EXPIRATION_S = 3600;
+export const REFRESH_TOKEN_DEFAULT_EXPIRATION_S = 604800;
+export const JWT_SUBJECT_CLAIM = 'sub';
+export const JWT_TYPE_CLAIM = 'type';
+export const REFRESH_TOKEN_TYPE = 'refresh';
+export const BCRYPT_SALT_ROUNDS = 10;

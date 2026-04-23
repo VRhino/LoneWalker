@@ -8,6 +8,12 @@ import {
   Max,
 } from 'class-validator';
 import { TreasureRarity } from '../entities/treasure.entity';
+import {
+  WGS84_LAT_MIN,
+  WGS84_LAT_MAX,
+  WGS84_LNG_MIN,
+  WGS84_LNG_MAX,
+} from '../../../common/constants/geo.constants';
 
 export class CreateTreasureDto {
   @IsString()
@@ -19,13 +25,13 @@ export class CreateTreasureDto {
   description: string;
 
   @IsNumber()
-  @Min(-90)
-  @Max(90)
+  @Min(WGS84_LAT_MIN)
+  @Max(WGS84_LAT_MAX)
   latitude: number;
 
   @IsNumber()
-  @Min(-180)
-  @Max(180)
+  @Min(WGS84_LNG_MIN)
+  @Max(WGS84_LNG_MAX)
   longitude: number;
 
   @IsOptional()

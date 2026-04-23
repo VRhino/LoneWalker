@@ -34,7 +34,7 @@ export class TreasureClaimEntity {
   @Column('int')
   xp_earned: number;
 
-  @Column('decimal', { precision: 3, scale: 1, default: 0 })
+  @Column('decimal', { precision: 6, scale: 1, default: 0 })
   distance_meters: number;
 
   @Column('int', { default: 0 })

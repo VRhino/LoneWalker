@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import {
   TreasureEntity,
   TreasureStatus,
@@ -17,19 +17,33 @@ import {
   TreasurerRadarDto,
   TreasureWallOfFameDto,
 } from './dto/treasure-response.dto';
+import {
+  GPS_ACCURACY_THRESHOLD_M,
+  DEFAULT_SEARCH_RADIUS_M,
+  buildWktPoint,
+} from '../../common/constants/geo.constants';
+import { GeoUtils } from '../../common/utils/geo.utils';
+import { ERROR_MESSAGES } from '../../common/constants/error-messages.constants';
+
+const TREASURE_ACTIVATION_RADIUS_M = 100;
+const TREASURE_CLAIM_RADIUS_M = 10;
+const RADAR_SCAN_MULTIPLIER = 10;
+const XP_DISTANCE_BONUS_WEIGHT = 0.2;
+const XP_ACCURACY_BONUS_WEIGHT = 0.1;
+const WALL_OF_FAME_LIMIT = 50;
+// Stored as a placeholder until real GPS validation timing is implemented
+const GPS_VALIDATION_STUB_MS = 3000;
+
+const XP_BASE_REWARDS: Record<TreasureRarity, number> = {
+  [TreasureRarity.COMMON]: 50,
+  [TreasureRarity.UNCOMMON]: 75,
+  [TreasureRarity.RARE]: 125,
+  [TreasureRarity.EPIC]: 250,
+  [TreasureRarity.LEGENDARY]: 500,
+};
 
 @Injectable()
 export class TreasuresService {
-  private readonly TREASURE_ACTIVATION_RADIUS = 100;
-  private readonly TREASURE_CLAIM_RADIUS = 10;
-  private readonly XP_BASE_REWARDS = {
-    [TreasureRarity.COMMON]: 50,
-    [TreasureRarity.UNCOMMON]: 75,
-    [TreasureRarity.RARE]: 125,
-    [TreasureRarity.EPIC]: 250,
-    [TreasureRarity.LEGENDARY]: 500,
-  };
-
   constructor(
     @InjectRepository(TreasureEntity)
     private treasureRepository: Repository<TreasureEntity>,
@@ -45,17 +59,20 @@ export class TreasuresService {
       creator_id: userId,
       ...createTreasureDto,
       current_uses: 0,
-      location: `POINT(${createTreasureDto.longitude} ${createTreasureDto.latitude})`,
+      location: buildWktPoint(
+        createTreasureDto.longitude,
+        createTreasureDto.latitude,
+      ),
     });
 
     const saved = await this.treasureRepository.save(treasure);
-    return this.mapToDto(saved);
+    return this.mapToDtoSync(saved, false);
   }
 
   async getTreasuresNearby(
     userLat: number,
     userLng: number,
-    radius: number = 5000,
+    radius: number = DEFAULT_SEARCH_RADIUS_M,
     userId?: string,
   ): Promise<TreasureDto[]> {
     const treasures = await this.treasureRepository
@@ -70,7 +87,17 @@ export class TreasuresService {
       .setParameters({ lat: userLat, lng: userLng })
       .getMany();
 
-    return Promise.all(treasures.map(t => this.mapToDto(t, userId)));
+    // Batch-load claimed status to avoid N+1
+    const claimedIds = new Set<string>();
+    if (userId && treasures.length > 0) {
+      const claims = await this.claimRepository.findBy({
+        user_id: userId,
+        treasure_id: In(treasures.map(t => t.id)),
+      });
+      claims.forEach(c => claimedIds.add(c.treasure_id));
+    }
+
+    return treasures.map(t => this.mapToDtoSync(t, claimedIds.has(t.id)));
   }
 
   async getTreasureById(
@@ -81,7 +108,7 @@ export class TreasuresService {
       id: treasureId,
     });
     if (!treasure) {
-      throw new NotFoundException('Treasure not found');
+      throw new NotFoundException(ERROR_MESSAGES.TREASURE_NOT_FOUND);
     }
     return this.mapToDto(treasure, userId);
   }
@@ -94,12 +121,12 @@ export class TreasuresService {
     const treasures = await this.getTreasuresNearby(
       userLat,
       userLng,
-      this.TREASURE_ACTIVATION_RADIUS * 10,
+      TREASURE_ACTIVATION_RADIUS_M * RADAR_SCAN_MULTIPLIER,
       userId,
     );
 
     return treasures.map(treasure => {
-      const distance = this.calculateDistance(
+      const distance = GeoUtils.calculateDistance(
         userLat,
         userLng,
         treasure.latitude,
@@ -113,7 +140,7 @@ export class TreasuresService {
         longitude: treasure.longitude,
         rarity: treasure.rarity,
         distance_meters: distance,
-        bearing_degrees: this.calculateBearing(
+        bearing_degrees: GeoUtils.calculateBearing(
           userLat,
           userLng,
           treasure.latitude,
@@ -121,9 +148,9 @@ export class TreasuresService {
         ),
         proximity_percent: Math.min(
           100,
-          Math.max(0, 100 - (distance / this.TREASURE_ACTIVATION_RADIUS) * 100),
+          Math.max(0, 100 - (distance / TREASURE_ACTIVATION_RADIUS_M) * 100),
         ),
-        can_claim: distance <= this.TREASURE_CLAIM_RADIUS,
+        can_claim: distance <= TREASURE_CLAIM_RADIUS_M,
       };
     });
   }
@@ -139,29 +166,29 @@ export class TreasuresService {
       id: treasureId,
     });
     if (!treasure) {
-      throw new NotFoundException('Treasure not found');
+      throw new NotFoundException(ERROR_MESSAGES.TREASURE_NOT_FOUND);
     }
 
     if (treasure.status !== TreasureStatus.ACTIVE) {
       throw new BadRequestException('Treasure is not active');
     }
 
-    const distance = this.calculateDistance(
+    const distance = GeoUtils.calculateDistance(
       userLat,
       userLng,
       treasure.latitude,
       treasure.longitude,
     );
 
-    if (distance > this.TREASURE_CLAIM_RADIUS) {
+    if (distance > TREASURE_CLAIM_RADIUS_M) {
       throw new BadRequestException(
-        `Too far from treasure. Distance: ${distance.toFixed(1)}m (Max: ${this.TREASURE_CLAIM_RADIUS}m)`,
+        `Too far from treasure. Distance: ${distance.toFixed(1)}m (Max: ${TREASURE_CLAIM_RADIUS_M}m)`,
       );
     }
 
-    if (userAccuracy > 50) {
+    if (userAccuracy > GPS_ACCURACY_THRESHOLD_M) {
       throw new BadRequestException(
-        `GPS accuracy insufficient. Accuracy: ${userAccuracy.toFixed(1)}m (Required: < 50m)`,
+        `GPS accuracy insufficient. Accuracy: ${userAccuracy.toFixed(1)}m (Required: < ${GPS_ACCURACY_THRESHOLD_M}m)`,
       );
     }
 
@@ -174,35 +201,30 @@ export class TreasuresService {
       throw new BadRequestException('You have already claimed this treasure');
     }
 
-    const baseXp = this.XP_BASE_REWARDS[treasure.rarity] || 50;
-    const distanceBonus = Math.max(
-      0,
-      (this.TREASURE_CLAIM_RADIUS - distance) / this.TREASURE_CLAIM_RADIUS,
+    const xpEarned = this.calculateClaimXp(
+      treasure.rarity,
+      distance,
+      userAccuracy,
     );
-    const accuracyBonus = (50 - userAccuracy) / 50;
-    const xpMultiplier = 1 + (distanceBonus * 0.2 + accuracyBonus * 0.1);
-    const xpEarned = Math.round(baseXp * xpMultiplier);
 
     const claim = this.claimRepository.create({
       user_id: userId,
       treasure_id: treasureId,
       xp_earned: xpEarned,
       distance_meters: distance,
-      gps_validation_time_ms: 3000,
+      gps_validation_time_ms: GPS_VALIDATION_STUB_MS,
     });
 
     await this.claimRepository.save(claim);
 
     treasure.current_uses += 1;
-
     if (treasure.max_uses && treasure.current_uses >= treasure.max_uses) {
       treasure.status = TreasureStatus.DEPLETED;
     }
-
     await this.treasureRepository.save(treasure);
 
     return {
-      treasure: await this.mapToDto(treasure, userId),
+      treasure: this.mapToDtoSync(treasure, true),
       xpEarned,
       claimed: true,
     };
@@ -216,7 +238,7 @@ export class TreasuresService {
       .leftJoinAndSelect('tc.user', 'u')
       .where('tc.treasure_id = :treasureId', { treasureId })
       .orderBy('tc.claimed_at', 'DESC')
-      .limit(50)
+      .limit(WALL_OF_FAME_LIMIT)
       .getMany();
 
     return claims.map(claim => ({
@@ -249,7 +271,6 @@ export class TreasuresService {
     };
 
     let totalXp = 0;
-
     claims.forEach(claim => {
       byRarity[claim.treasure.rarity]++;
       totalXp += claim.xp_earned;
@@ -262,56 +283,29 @@ export class TreasuresService {
     };
   }
 
-  private calculateDistance(
-    lat1: number,
-    lon1: number,
-    lat2: number,
-    lon2: number,
+  private calculateClaimXp(
+    rarity: TreasureRarity,
+    distance: number,
+    userAccuracy: number,
   ): number {
-    const R = 6371000;
-    const φ1 = (lat1 * Math.PI) / 180;
-    const φ2 = (lat2 * Math.PI) / 180;
-    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
-
-    const a =
-      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    return R * c;
+    const baseXp = XP_BASE_REWARDS[rarity];
+    const distanceBonus = Math.max(
+      0,
+      (TREASURE_CLAIM_RADIUS_M - distance) / TREASURE_CLAIM_RADIUS_M,
+    );
+    const accuracyBonus =
+      (GPS_ACCURACY_THRESHOLD_M - userAccuracy) / GPS_ACCURACY_THRESHOLD_M;
+    const xpMultiplier =
+      1 +
+      distanceBonus * XP_DISTANCE_BONUS_WEIGHT +
+      accuracyBonus * XP_ACCURACY_BONUS_WEIGHT;
+    return Math.round(baseXp * xpMultiplier);
   }
 
-  private calculateBearing(
-    lat1: number,
-    lon1: number,
-    lat2: number,
-    lon2: number,
-  ): number {
-    const φ1 = (lat1 * Math.PI) / 180;
-    const φ2 = (lat2 * Math.PI) / 180;
-    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
-
-    const y = Math.sin(Δλ) * Math.cos(φ2);
-    const x =
-      Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
-    const θ = Math.atan2(y, x);
-
-    return ((θ * 180) / Math.PI + 360) % 360;
-  }
-
-  private async mapToDto(
+  private mapToDtoSync(
     treasure: TreasureEntity,
-    userId?: string,
-  ): Promise<TreasureDto> {
-    let claimed = false;
-    if (userId) {
-      claimed = !!(await this.claimRepository.findOneBy({
-        user_id: userId,
-        treasure_id: treasure.id,
-      }));
-    }
-
+    claimed: boolean,
+  ): TreasureDto {
     return {
       id: treasure.id,
       title: treasure.title,
@@ -331,5 +325,19 @@ export class TreasuresService {
       created_at: treasure.created_at,
       updated_at: treasure.updated_at,
     };
+  }
+
+  private async mapToDto(
+    treasure: TreasureEntity,
+    userId?: string,
+  ): Promise<TreasureDto> {
+    let claimed = false;
+    if (userId) {
+      claimed = !!(await this.claimRepository.findOneBy({
+        user_id: userId,
+        treasure_id: treasure.id,
+      }));
+    }
+    return this.mapToDtoSync(treasure, claimed);
   }
 }

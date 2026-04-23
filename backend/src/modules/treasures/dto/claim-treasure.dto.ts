@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, Min, Max } from 'class-validator';
+import { IsNumber, Min, Max } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   WGS84_LAT_MIN,
@@ -7,7 +7,7 @@ import {
   WGS84_LNG_MAX,
 } from '../../../common/constants/geo.constants';
 
-export class CreateExplorationDto {
+export class ClaimTreasureDto {
   @ApiProperty({ example: 40.4168, description: 'Latitude coordinate' })
   @IsNumber()
   @Min(WGS84_LAT_MIN)
@@ -20,20 +20,8 @@ export class CreateExplorationDto {
   @Max(WGS84_LNG_MAX)
   longitude: number;
 
-  @ApiProperty({ example: 15, description: 'GPS accuracy in meters' })
+  @ApiProperty({ example: 10, description: 'GPS accuracy in meters' })
   @IsNumber()
-  @IsOptional()
-  accuracy_meters?: number;
-
-  @ApiProperty({ example: 1.5, description: 'User speed in km/h' })
-  @IsNumber()
-  @IsOptional()
-  speed_kmh?: number;
-
-  @ApiProperty({
-    example: '2026-04-16T14:30:00Z',
-    description: 'Timestamp of the exploration',
-  })
-  @IsOptional()
-  timestamp?: string;
+  @Min(0)
+  accuracy_meters: number;
 }

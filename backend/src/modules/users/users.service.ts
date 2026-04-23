@@ -7,6 +7,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { UserEntity } from './entities/user.entity';
+import { BCRYPT_SALT_ROUNDS } from '../../common/constants/auth.constants';
+import { ERROR_MESSAGES } from '../../common/constants/error-messages.constants';
+import { PrivacyMode } from '../../common/enums/privacy-mode.enum';
 
 @Injectable()
 export class UsersService {
@@ -15,15 +18,11 @@ export class UsersService {
     private usersRepository: Repository<UserEntity>,
   ) {}
 
-  /**
-   * Create a new user
-   */
   async create(
     username: string,
     email: string,
     password: string,
   ): Promise<UserEntity> {
-    // Check if user already exists
     const existingUser = await this.usersRepository.findOne({
       where: [{ email }, { username }],
     });
@@ -33,11 +32,9 @@ export class UsersService {
       throw new ConflictException(`${field} already exists`);
     }
 
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(BCRYPT_SALT_ROUNDS);
     const password_hash = await bcrypt.hash(password, salt);
 
-    // Create user
     const user = this.usersRepository.create({
       username,
       email,
@@ -47,42 +44,35 @@ export class UsersService {
     return await this.usersRepository.save(user);
   }
 
-  /**
-   * Find user by email
-   */
   async findByEmail(email: string): Promise<UserEntity | null> {
     return await this.usersRepository.findOne({ where: { email } });
   }
 
-  /**
-   * Find user by ID
-   */
   async findById(id: string): Promise<UserEntity | null> {
     return await this.usersRepository.findOne({ where: { id } });
   }
 
-  /**
-   * Find user by username
-   */
+  async findByIdOrThrow(id: string): Promise<UserEntity> {
+    const user = await this.findById(id);
+    if (!user) {
+      throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);
+    }
+    return user;
+  }
+
   async findByUsername(username: string): Promise<UserEntity | null> {
     return await this.usersRepository.findOne({ where: { username } });
   }
 
-  /**
-   * Verify password
-   */
   async verifyPassword(password: string, hash: string): Promise<boolean> {
     return await bcrypt.compare(password, hash);
   }
 
-  /**
-   * Update user refresh token
-   */
   async updateRefreshToken(id: string, token: string | null): Promise<void> {
     let tokenHash: string | null = null;
 
     if (token) {
-      const salt = await bcrypt.genSalt(10);
+      const salt = await bcrypt.genSalt(BCRYPT_SALT_ROUNDS);
       tokenHash = await bcrypt.hash(token, salt);
     }
 
@@ -92,9 +82,6 @@ export class UsersService {
     );
   }
 
-  /**
-   * Verify refresh token
-   */
   async verifyRefreshToken(id: string, token: string): Promise<boolean> {
     const user = await this.findById(id);
 
@@ -105,22 +92,23 @@ export class UsersService {
     return await bcrypt.compare(token, user.refresh_token_hash);
   }
 
-  /**
-   * Update last login timestamp
-   */
   async updateLastLogin(id: string): Promise<void> {
     await this.usersRepository.update({ id }, { last_login_at: new Date() });
   }
 
-  /**
-   * Get user profile (public data)
-   */
-  async getUserProfile(id: string) {
-    const user = await this.findById(id);
+  async updateExplorationStats(
+    id: string,
+    explorationPercent: number,
+    totalXp: number,
+  ): Promise<void> {
+    await this.usersRepository.update(
+      { id },
+      { exploration_percent: explorationPercent, total_xp: totalXp },
+    );
+  }
 
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
+  async getUserProfile(id: string) {
+    const user = await this.findByIdOrThrow(id);
 
     return {
       id: user.id,
@@ -137,25 +125,17 @@ export class UsersService {
     };
   }
 
-  /**
-   * Get public user profile (for viewing other users)
-   */
   async getPublicProfile(id: string) {
-    const user = await this.findById(id);
+    const user = await this.findByIdOrThrow(id);
 
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    const profile: any = {
+    const profile: Record<string, unknown> = {
       id: user.id,
       username: user.username,
       avatar_url: user.avatar_url,
       medals_count: user.medals_count,
     };
 
-    // Only show exploration and xp if user is public
-    if (user.privacy_mode === 'PUBLIC') {
+    if (user.privacy_mode === PrivacyMode.PUBLIC) {
       profile.exploration_percent = user.exploration_percent;
       profile.total_xp = user.total_xp;
     }

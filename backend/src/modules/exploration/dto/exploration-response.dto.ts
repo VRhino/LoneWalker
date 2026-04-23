@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { MasteryLevel } from '../../../common/enums/mastery-level.enum';
 
 export class ExplorationProgressDto {
   @ApiProperty({
@@ -52,7 +53,7 @@ export class ExplorationProgressDto {
     district_id: string;
     name: string;
     exploration_percent: number;
-    mastery_level: 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM';
+    mastery_level: MasteryLevel;
   }>;
 }
 
