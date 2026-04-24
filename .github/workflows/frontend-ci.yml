@@ -41,7 +41,7 @@ jobs:
         run: flutter test --coverage
 
       - name: Upload coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           files: ./frontend/coverage/lcov.info
           flags: frontend
@@ -61,7 +61,7 @@ jobs:
           cache: true
 
       - name: Setup Java
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: 17
@@ -76,7 +76,7 @@ jobs:
         run: flutter build apk --release --split-per-abi
 
       - name: Upload APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: app-release.apk
           path: frontend/build/app/outputs/apk/release/
@@ -103,7 +103,7 @@ jobs:
         run: flutter build ios --release --no-codesign
 
       - name: Upload build
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ios-build
           path: frontend/build/ios/
