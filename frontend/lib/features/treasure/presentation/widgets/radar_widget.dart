@@ -1,6 +1,10 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../../../config/app_config.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../data/models/treasure_model.dart';
+import '../utils/treasure_rarity_colors.dart';
 
 class RadarWidget extends StatefulWidget {
   final List<RadarTreasureModel> treasures;
@@ -51,8 +55,8 @@ class _RadarWidgetState extends State<RadarWidget> {
 
         return Center(
           child: SizedBox(
-            width: 300,
-            height: 300,
+            width: AppDimensions.radarWidgetSize,
+            height: AppDimensions.radarWidgetSize,
             child: CustomPaint(
               painter: RadarPainter(
                 treasures: widget.treasures,
@@ -70,30 +74,30 @@ class _RadarWidgetState extends State<RadarWidget> {
   }
 
   Widget _buildTreasureMarkers() {
-    const radarRadius = 150.0;
-    const maxDistance = 1000.0;
+    final radarRadius = AppDimensions.radarBaseRadius;
+    final maxDistance = AppConfig.radarDisplayRadiusMeters;
 
     return Stack(
       alignment: Alignment.center,
       children: [
         ...widget.treasures.map((treasure) {
-          final angle = (treasure.bearingDegrees - heading) * (3.14159 / 180);
+          final angle = (treasure.bearingDegrees - heading) * (math.pi / 180);
           final distance = treasure.distanceMeters;
           final radarDist = (distance / maxDistance) * radarRadius;
 
-          final x = radarDist * Math.sin(angle);
-          final y = -radarDist * Math.cos(angle);
+          final x = radarDist * math.sin(angle);
+          final y = -radarDist * math.cos(angle);
 
-          final color = _getColorForRarity(treasure.rarity, treasure.proximityPercent);
+          final color = TreasureRarityColors.proximityColor(treasure.proximityPercent);
 
           return Positioned(
-            left: 150 + x - 12,
-            top: 150 + y - 12,
+            left: radarRadius + x - AppDimensions.radarMarkerOffset,
+            top: radarRadius + y - AppDimensions.radarMarkerOffset,
             child: GestureDetector(
               onTap: widget.onTreasureTap,
               child: Container(
-                width: 24,
-                height: 24,
+                width: AppDimensions.radarMarkerSize,
+                height: AppDimensions.radarMarkerSize,
                 decoration: BoxDecoration(
                   color: color,
                   shape: BoxShape.circle,
@@ -103,7 +107,7 @@ class _RadarWidgetState extends State<RadarWidget> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: color.withOpacity(0.5),
+                      color: color.withValues(alpha: 0.5),
                       blurRadius: 8,
                       spreadRadius: 2,
                     ),
@@ -129,7 +133,7 @@ class _RadarWidgetState extends State<RadarWidget> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.7),
+              color: Colors.red.withValues(alpha: 0.7),
               borderRadius: BorderRadius.circular(4),
             ),
             child: const Text(
@@ -144,37 +148,6 @@ class _RadarWidgetState extends State<RadarWidget> {
         ),
       ],
     );
-  }
-
-  Color _getColorForRarity(TreasureRarity rarity, double proximityPercent) {
-    Color baseColor;
-
-    switch (rarity) {
-      case TreasureRarity.common:
-        baseColor = Colors.grey[400]!;
-        break;
-      case TreasureRarity.uncommon:
-        baseColor = Colors.green;
-        break;
-      case TreasureRarity.rare:
-        baseColor = Colors.blue;
-        break;
-      case TreasureRarity.epic:
-        baseColor = Colors.purple;
-        break;
-      case TreasureRarity.legendary:
-        baseColor = Colors.orange;
-        break;
-    }
-
-    // Interpolate between blue (cold) and red (hot) based on proximity
-    if (proximityPercent < 50) {
-      // Cold colors (blue)
-      return Color.lerp(Colors.blue, Colors.cyan, proximityPercent / 50)!;
-    } else {
-      // Hot colors (red)
-      return Color.lerp(Colors.yellow, Colors.red, (proximityPercent - 50) / 50)!;
-    }
   }
 
   @override
@@ -197,24 +170,24 @@ class RadarPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final baseRadius = 150.0;
+    final baseRadius = AppDimensions.radarBaseRadius;
 
     // Draw background
     canvas.drawCircle(
       center,
       baseRadius,
       Paint()
-        ..color = Colors.grey[900]!.withOpacity(0.8)
+        ..color = Colors.grey[900]!.withValues(alpha: 0.8)
         ..style = PaintingStyle.fill,
     );
 
     // Draw concentric circles
-    for (int i = 1; i <= 3; i++) {
+    for (int i = 1; i <= AppDimensions.radarConcentricCircleCount; i++) {
       canvas.drawCircle(
         center,
-        baseRadius * (i / 3),
+        baseRadius * (i / AppDimensions.radarConcentricCircleCount),
         Paint()
-          ..color = Colors.grey[700]!.withOpacity(0.3)
+          ..color = Colors.grey[700]!.withValues(alpha: 0.3)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1,
       );
@@ -235,10 +208,10 @@ class RadarPainter extends CustomPainter {
     const angles = [0, 90, 180, 270];
 
     for (int i = 0; i < 4; i++) {
-      final angle = angles[i] * (3.14159 / 180);
+      final angle = angles[i] * (math.pi / 180);
       final offset = Offset(
-        center.dx + radius * Math.sin(angle),
-        center.dy - radius * Math.cos(angle),
+        center.dx + radius * math.sin(angle),
+        center.dy - radius * math.cos(angle),
       );
 
       final textPainter = TextPainter(
@@ -255,18 +228,20 @@ class RadarPainter extends CustomPainter {
 
       textPainter.layout();
       textPainter.paint(
+        canvas,
         offset - Offset(textPainter.width / 2, textPainter.height / 2),
       );
     }
   }
 
   void _drawCompassRose(Canvas canvas, Offset center, double radius, double heading) {
-    final angle = heading * (3.14159 / 180);
+    final angle = heading * (math.pi / 180);
+    final arrowRadius = radius - AppDimensions.radarCompassArrowInset;
 
     // North arrow
     final northEnd = Offset(
-      center.dx + (radius - 20) * Math.sin(angle),
-      center.dy - (radius - 20) * Math.cos(angle),
+      center.dx + arrowRadius * math.sin(angle),
+      center.dy - arrowRadius * math.cos(angle),
     );
 
     canvas.drawLine(
@@ -279,40 +254,40 @@ class RadarPainter extends CustomPainter {
 
     // South indicator
     final southEnd = Offset(
-      center.dx - (radius - 20) * Math.sin(angle),
-      center.dy + (radius - 20) * Math.cos(angle),
+      center.dx - arrowRadius * math.sin(angle),
+      center.dy + arrowRadius * math.cos(angle),
     );
 
     canvas.drawLine(
       center,
       southEnd,
       Paint()
-        ..color = Colors.red.withOpacity(0.5)
+        ..color = Colors.red.withValues(alpha: 0.5)
         ..strokeWidth = 2,
     );
   }
 
   void _drawGridLines(Canvas canvas, Offset center, double radius) {
-    const gridLines = 8;
+    final gridLines = AppDimensions.radarGridLineCount;
 
     for (int i = 0; i < gridLines; i++) {
-      final angle = (i * 360 / gridLines) * (3.14159 / 180);
+      final angle = (i * 360 / gridLines) * (math.pi / 180);
 
       final start = Offset(
-        center.dx + radius * Math.sin(angle),
-        center.dy - radius * Math.cos(angle),
+        center.dx + radius * math.sin(angle),
+        center.dy - radius * math.cos(angle),
       );
 
       final end = Offset(
-        center.dx - radius * Math.sin(angle),
-        center.dy + radius * Math.cos(angle),
+        center.dx - radius * math.sin(angle),
+        center.dy + radius * math.cos(angle),
       );
 
       canvas.drawLine(
         start,
         end,
         Paint()
-          ..color = Colors.grey[700]!.withOpacity(0.2)
+          ..color = Colors.grey[700]!.withValues(alpha: 0.2)
           ..strokeWidth = 0.5,
       );
     }
@@ -325,10 +300,3 @@ class RadarPainter extends CustomPainter {
         oldDelegate.proximityPercents != proximityPercents;
   }
 }
-
-class Math {
-  static double sin(double x) => math.sin(x);
-  static double cos(double x) => math.cos(x);
-}
-
-import 'dart:math' as math;

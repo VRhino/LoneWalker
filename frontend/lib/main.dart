@@ -40,7 +40,7 @@ class HomeScreen extends StatelessWidget {
             const Icon(
               Icons.map,
               size: 64,
-              color: Color(0xFF667BC6),
+              color: AppTheme.primaryColor,
             ),
             const SizedBox(height: 24),
             const Text(
@@ -62,7 +62,7 @@ class HomeScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
+                color: Colors.blue.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Column(

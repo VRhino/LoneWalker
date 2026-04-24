@@ -86,7 +86,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     if (isAuthenticated) {
       // In a real app, you'd verify the token with the server
-      emit(const AuthAuthenticated(
+      emit(AuthAuthenticated(
         user: User(
           id: '',
           username: '',

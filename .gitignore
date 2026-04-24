@@ -75,3 +75,6 @@ service-account-key.json
 
 #graphify
 graphify-out/
+
+#claude
+.claude/*

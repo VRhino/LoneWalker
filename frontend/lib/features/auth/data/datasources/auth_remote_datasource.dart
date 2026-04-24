@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/constants/storage_keys.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/user_model.dart';
 
@@ -15,7 +17,7 @@ class AuthRemoteDataSource {
   }) async {
     try {
       final response = await apiClient.post(
-        '/auth/register',
+        ApiEndpoints.authRegister,
         data: {
           'username': username,
           'email': email,
@@ -25,13 +27,13 @@ class AuthRemoteDataSource {
       );
 
       final data = response.data as Map<String, dynamic>;
-      final user = UserModel.fromJson(data['user']);
-      final tokens = data['tokens'] as Map<String, dynamic>;
+      final user = UserModel.fromJson(data[ApiResponseKeys.user]);
+      final tokens = data[ApiResponseKeys.tokens] as Map<String, dynamic>;
 
       return (
         user: user,
-        accessToken: tokens['access_token'] as String,
-        refreshToken: tokens['refresh_token'] as String,
+        accessToken: tokens[ApiResponseKeys.accessToken] as String,
+        refreshToken: tokens[ApiResponseKeys.refreshToken] as String,
       );
     } on DioException catch (e) {
       throw _handleDioException(e);
@@ -44,7 +46,7 @@ class AuthRemoteDataSource {
   }) async {
     try {
       final response = await apiClient.post(
-        '/auth/login',
+        ApiEndpoints.authLogin,
         data: {
           'email': email,
           'password': password,
@@ -52,13 +54,13 @@ class AuthRemoteDataSource {
       );
 
       final data = response.data as Map<String, dynamic>;
-      final user = UserModel.fromJson(data['user']);
-      final tokens = data['tokens'] as Map<String, dynamic>;
+      final user = UserModel.fromJson(data[ApiResponseKeys.user]);
+      final tokens = data[ApiResponseKeys.tokens] as Map<String, dynamic>;
 
       return (
         user: user,
-        accessToken: tokens['access_token'] as String,
-        refreshToken: tokens['refresh_token'] as String,
+        accessToken: tokens[ApiResponseKeys.accessToken] as String,
+        refreshToken: tokens[ApiResponseKeys.refreshToken] as String,
       );
     } on DioException catch (e) {
       throw _handleDioException(e);
@@ -67,7 +69,7 @@ class AuthRemoteDataSource {
 
   Future<void> logout() async {
     try {
-      await apiClient.post('/auth/logout');
+      await apiClient.post(ApiEndpoints.authLogout);
       await apiClient.logout();
     } on DioException catch (e) {
       throw _handleDioException(e);
@@ -75,15 +77,16 @@ class AuthRemoteDataSource {
   }
 
   Exception _handleDioException(DioException e) {
-    if (e.response?.statusCode == 401) {
-      return Exception('Invalid email or password');
-    } else if (e.response?.statusCode == 409) {
-      return Exception('Email or username already exists');
-    } else if (e.response?.statusCode == 400) {
-      final message = e.response?.data['message'] as String?;
-      return Exception(message ?? 'Invalid input');
-    } else {
-      return Exception(e.message ?? 'An error occurred');
+    switch (e.response?.statusCode) {
+      case 401:
+        return Exception('Invalid email or password');
+      case 409:
+        return Exception('Email or username already exists');
+      case 400:
+        final message = e.response?.data['message'] as String?;
+        return Exception(message ?? 'Invalid input');
+      default:
+        return Exception(e.message ?? 'An error occurred');
     }
   }
 }

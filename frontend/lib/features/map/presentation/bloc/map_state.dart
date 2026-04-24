@@ -1,5 +1,4 @@
 import 'package:equatable/equatable.dart';
-import '../../data/models/map_models.dart';
 import '../../domain/entities/map_state.dart';
 
 abstract class MapState extends Equatable {

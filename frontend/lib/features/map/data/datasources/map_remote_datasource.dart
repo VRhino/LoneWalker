@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/map_models.dart';
 
@@ -7,7 +8,6 @@ class MapRemoteDataSource {
 
   MapRemoteDataSource({required this.apiClient});
 
-  /// Register exploration point
   Future<ExplorationStatsModel> registerExploration({
     required double latitude,
     required double longitude,
@@ -16,7 +16,7 @@ class MapRemoteDataSource {
   }) async {
     try {
       final response = await apiClient.post(
-        '/exploration',
+        ApiEndpoints.explorationRegister,
         data: {
           'latitude': latitude,
           'longitude': longitude,
@@ -32,17 +32,15 @@ class MapRemoteDataSource {
     }
   }
 
-  /// Get exploration progress
   Future<ExplorationStatsModel> getExplorationProgress() async {
     try {
-      final response = await apiClient.get('/exploration/progress');
+      final response = await apiClient.get(ApiEndpoints.explorationProgress);
       return ExplorationStatsModel.fromJson(response.data);
     } on DioException catch (e) {
       throw _handleDioException(e);
     }
   }
 
-  /// Get map with fog of war
   Future<Map<String, dynamic>> getMapWithFog({
     required double latitude,
     required double longitude,
@@ -50,7 +48,7 @@ class MapRemoteDataSource {
   }) async {
     try {
       final response = await apiClient.get(
-        '/exploration/map',
+        ApiEndpoints.explorationMap,
         queryParameters: {
           'lat': latitude,
           'lng': longitude,
@@ -64,10 +62,9 @@ class MapRemoteDataSource {
     }
   }
 
-  /// Get last exploration point
   Future<Map<String, dynamic>> getLastExploration() async {
     try {
-      final response = await apiClient.get('/exploration/last');
+      final response = await apiClient.get(ApiEndpoints.explorationLast);
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
       throw _handleDioException(e);
@@ -75,13 +72,14 @@ class MapRemoteDataSource {
   }
 
   Exception _handleDioException(DioException e) {
-    if (e.response?.statusCode == 400) {
-      final message = e.response?.data['message'] as String?;
-      return Exception(message ?? 'Invalid exploration data');
-    } else if (e.response?.statusCode == 401) {
-      return Exception('Unauthorized');
-    } else {
-      return Exception(e.message ?? 'An error occurred');
+    switch (e.response?.statusCode) {
+      case 400:
+        final message = e.response?.data['message'] as String?;
+        return Exception(message ?? 'Invalid exploration data');
+      case 401:
+        return Exception('Unauthorized');
+      default:
+        return Exception(e.message ?? 'An error occurred');
     }
   }
 }

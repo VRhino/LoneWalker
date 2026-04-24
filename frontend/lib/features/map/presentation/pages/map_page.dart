@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import '../../../../config/app_config.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../bloc/map_bloc.dart';
 import '../bloc/map_event.dart';
 import '../bloc/map_state.dart';
-import '../widgets/fog_of_war_widget.dart';
 
 class MapPage extends StatefulWidget {
   const MapPage({Key? key}) : super(key: key);
@@ -14,8 +15,8 @@ class MapPage extends StatefulWidget {
 }
 
 class _MapPageState extends State<MapPage> {
-  late GoogleMapController mapController;
-  double currentZoom = 15;
+  GoogleMapController? mapController;
+  double currentZoom = AppConfig.mapDefaultZoom;
 
   @override
   void initState() {
@@ -27,6 +28,7 @@ class _MapPageState extends State<MapPage> {
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -85,21 +87,17 @@ class _MapPageState extends State<MapPage> {
                 if (state is MapLoaded ||
                     state is ExplorationRegistered ||
                     state is LocationUpdated) {
-                  final mapLoaded = state as MapLoaded? ??
-                      (state as ExplorationRegistered?)?.stats as dynamic ??
-                      (state as LocationUpdated?)?.stats as dynamic;
-
                   final userLat = (state is MapLoaded)
-                      ? (state as MapLoaded).userLocation.latitude
+                      ? state.userLocation.latitude
                       : (state is LocationUpdated)
-                          ? (state as LocationUpdated).location.latitude
-                          : 40.4168;
+                          ? state.location.latitude
+                          : AppConfig.defaultLatitude;
 
                   final userLng = (state is MapLoaded)
-                      ? (state as MapLoaded).userLocation.longitude
+                      ? state.userLocation.longitude
                       : (state is LocationUpdated)
-                          ? (state as LocationUpdated).location.longitude
-                          : -3.7038;
+                          ? state.location.longitude
+                          : AppConfig.defaultLongitude;
 
                   return GoogleMap(
                     onMapCreated: _onMapCreated,
@@ -150,13 +148,11 @@ class _MapPageState extends State<MapPage> {
                   int totalXp = 0;
 
                   if (state is MapLoaded) {
-                    explorationPercent =
-                        (state as MapLoaded).explorationStats.explorationPercent;
-                    totalXp = (state as MapLoaded).explorationStats.totalXp;
+                    explorationPercent = state.explorationStats.explorationPercent;
+                    totalXp = state.explorationStats.totalXp;
                   } else if (state is ExplorationRegistered) {
-                    explorationPercent =
-                        (state as ExplorationRegistered).stats.explorationPercent;
-                    totalXp = (state as ExplorationRegistered).stats.totalXp;
+                    explorationPercent = state.stats.explorationPercent;
+                    totalXp = state.stats.totalXp;
                   }
 
                   return Card(
@@ -173,7 +169,7 @@ class _MapPageState extends State<MapPage> {
                             children: [
                               const Icon(
                                 Icons.explore,
-                                color: Color(0xFF667BC6),
+                                color: AppTheme.primaryColor,
                               ),
                               const SizedBox(width: 8),
                               Text(
@@ -193,7 +189,7 @@ class _MapPageState extends State<MapPage> {
                               minHeight: 8,
                               backgroundColor: Colors.grey[300],
                               valueColor: const AlwaysStoppedAnimation<Color>(
-                                Color(0xFF667BC6),
+                                AppTheme.primaryColor,
                               ),
                             ),
                           ),
@@ -263,7 +259,7 @@ class _MapPageState extends State<MapPage> {
 
   @override
   void dispose() {
-    mapController.dispose();
+    mapController?.dispose();
     super.dispose();
   }
 }

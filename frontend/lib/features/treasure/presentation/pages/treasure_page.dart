@@ -1,9 +1,14 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../../../config/app_config.dart';
+import '../../../../core/theme/app_dimensions.dart';
+import '../../data/models/treasure_model.dart';
 import '../bloc/treasure_bloc.dart';
 import '../bloc/treasure_event.dart';
 import '../bloc/treasure_state.dart';
+import '../utils/treasure_rarity_colors.dart';
 import '../widgets/radar_widget.dart';
 
 class TreasurePage extends StatefulWidget {
@@ -14,7 +19,7 @@ class TreasurePage extends StatefulWidget {
 }
 
 class _TreasurePageState extends State<TreasurePage> {
-  late Stream<Position> positionStream;
+  StreamSubscription<Position>? _positionSubscription;
 
   @override
   void initState() {
@@ -23,14 +28,13 @@ class _TreasurePageState extends State<TreasurePage> {
   }
 
   void _initLocationStream() {
-    positionStream = Geolocator.getPositionStream(
+    _positionSubscription = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
         distanceFilter: 10,
       ),
-    );
-
-    positionStream.listen((position) {
+    ).listen((position) {
+      if (!mounted) return;
       context.read<TreasureBloc>().add(
             ActivateRadarEvent(
               latitude: position.latitude,
@@ -152,14 +156,14 @@ class _TreasurePageState extends State<TreasurePage> {
     );
   }
 
-  Widget _buildTreasuresList(BuildContext context, treasures) {
+  Widget _buildTreasuresList(BuildContext context, List<RadarTreasureModel> treasures) {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: treasures.length,
       itemBuilder: (context, index) {
         final treasure = treasures[index];
-        final proximityColor = treasure.proximityPercent < 50
+        final proximityColor = treasure.proximityPercent < AppDimensions.proximityThreshold
             ? Colors.blue
             : Colors.red;
 
@@ -264,7 +268,7 @@ class _TreasurePageState extends State<TreasurePage> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: _getRarityColor(treasure.rarity),
+                    color: TreasureRarityColors.baseColor(treasure.rarity),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -287,7 +291,7 @@ class _TreasurePageState extends State<TreasurePage> {
                   ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: state.wallOfFame.length.clamp(0, 5),
+                    itemCount: state.wallOfFame.length.clamp(0, AppDimensions.wallOfFameMaxItems),
                     itemBuilder: (context, index) {
                       final claim = state.wallOfFame[index];
                       return ListTile(
@@ -317,7 +321,7 @@ class _TreasurePageState extends State<TreasurePage> {
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.green.withOpacity(0.1),
+              color: Colors.green.withValues(alpha: 0.1),
             ),
             child: const Icon(
               Icons.check_circle,
@@ -343,8 +347,8 @@ class _TreasurePageState extends State<TreasurePage> {
           ElevatedButton(
             onPressed: () {
               context.read<TreasureBloc>().add(const ActivateRadarEvent(
-                latitude: 40.4168,
-                longitude: -3.7038,
+                latitude: AppConfig.defaultLatitude,
+                longitude: AppConfig.defaultLongitude,
               ));
             },
             child: const Text('Back to Radar'),
@@ -366,8 +370,8 @@ class _TreasurePageState extends State<TreasurePage> {
           ElevatedButton(
             onPressed: () {
               context.read<TreasureBloc>().add(const ActivateRadarEvent(
-                latitude: 40.4168,
-                longitude: -3.7038,
+                latitude: AppConfig.defaultLatitude,
+                longitude: AppConfig.defaultLongitude,
               ));
             },
             child: const Text('Retry'),
@@ -375,21 +379,6 @@ class _TreasurePageState extends State<TreasurePage> {
         ],
       ),
     );
-  }
-
-  Color _getRarityColor(TreasureRarity rarity) {
-    switch (rarity) {
-      case TreasureRarity.common:
-        return Colors.grey;
-      case TreasureRarity.uncommon:
-        return Colors.green;
-      case TreasureRarity.rare:
-        return Colors.blue;
-      case TreasureRarity.epic:
-        return Colors.purple;
-      case TreasureRarity.legendary:
-        return Colors.orange;
-    }
   }
 
   void _showHelpDialog() {
@@ -414,6 +403,7 @@ class _TreasurePageState extends State<TreasurePage> {
 
   @override
   void dispose() {
+    _positionSubscription?.cancel();
     super.dispose();
   }
 }

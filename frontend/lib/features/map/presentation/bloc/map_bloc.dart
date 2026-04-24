@@ -1,9 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
-import '../../config/app_config.dart';
+import '../../../../config/app_config.dart';
 import '../../data/datasources/map_remote_datasource.dart';
 import '../../data/models/map_models.dart';
-import '../../domain/entities/map_state.dart';
 import 'map_event.dart';
 import 'map_state.dart';
 
@@ -39,14 +38,14 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       // Get current position
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 10),
+        timeLimit: AppConfig.positionRequestTimeout,
       );
 
       // Load map data
       final mapData = await remoteDataSource.getMapWithFog(
         latitude: position.latitude,
         longitude: position.longitude,
-        radius: 5000,
+        radius: AppConfig.defaultSearchRadiusMeters.toDouble(),
       );
 
       // Load progress
@@ -125,7 +124,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       final userLocation = MapLocationModel(
         latitude: event.latitude,
         longitude: event.longitude,
-        accuracy: 10,
+        accuracy: AppConfig.defaultGpsAccuracyEstimate,
       );
 
       emit(MapLoaded(
@@ -170,7 +169,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       final mapData = await remoteDataSource.getMapWithFog(
         latitude: position.latitude,
         longitude: position.longitude,
-        radius: 5000,
+        radius: AppConfig.defaultSearchRadiusMeters.toDouble(),
       );
 
       final stats = await remoteDataSource.getExplorationProgress();

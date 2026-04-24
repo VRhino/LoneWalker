@@ -1,13 +1,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../../config/app_config.dart';
 import '../../data/datasources/treasure_remote_datasource.dart';
+import '../../data/models/treasure_model.dart';
 import 'treasure_event.dart';
 import 'treasure_state.dart';
 
 class TreasureBloc extends Bloc<TreasureEvent, TreasureState> {
   final TreasureRemoteDataSource remoteDataSource;
-
-  static const int radarActivationRadius = 100;
-  static const int treasureClaimRadius = 10;
 
   TreasureBloc({required this.remoteDataSource}) : super(const TreasureInitial()) {
     on<ActivateRadarEvent>(_onActivateRadar);
@@ -32,7 +31,7 @@ class TreasureBloc extends Bloc<TreasureEvent, TreasureState> {
       );
 
       final activeTreasures = radarData
-          .where((t) => t.distanceMeters <= radarActivationRadius * 10)
+          .where((t) => t.distanceMeters <= AppConfig.radarDisplayRadiusMeters)
           .toList();
 
       if (activeTreasures.isEmpty) {
@@ -66,7 +65,7 @@ class TreasureBloc extends Bloc<TreasureEvent, TreasureState> {
       );
 
       final activeTreasures = radarData
-          .where((t) => t.distanceMeters <= radarActivationRadius * 10)
+          .where((t) => t.distanceMeters <= AppConfig.radarDisplayRadiusMeters)
           .toList();
 
       emit(RadarActive(
@@ -122,7 +121,7 @@ class TreasureBloc extends Bloc<TreasureEvent, TreasureState> {
     Emitter<TreasureState> emit,
   ) async {
     try {
-      if (event.accuracyMeters > 50) {
+      if (event.accuracyMeters > AppConfig.gpsAccuracyThreshold) {
         emit(TreasureError(
           message: 'GPS accuracy insufficient: ${event.accuracyMeters.toStringAsFixed(1)}m',
         ));
@@ -183,9 +182,7 @@ class TreasureBloc extends Bloc<TreasureEvent, TreasureState> {
     }
   }
 
-  dynamic _mapToTreasure(Map<String, dynamic> json) {
-    // Import from models
-    // This is a placeholder - in actual code, use TreasureModel.fromJson
-    return json;
+  TreasureModel _mapToTreasure(Map<String, dynamic> json) {
+    return TreasureModel.fromJson(json);
   }
 }

@@ -1,14 +1,15 @@
 import 'package:dio/dio.dart';
-import 'package:get_storage/get_storage.dart';
-import '../config/app_config.dart';
+import '../../config/app_config.dart';
+import '../constants/api_endpoints.dart';
+import '../constants/storage_keys.dart';
+import 'token_manager.dart';
 
 class ApiClient {
-  late Dio _dio;
-  final _storage = GetStorage();
-  static const String _tokenKey = 'access_token';
-  static const String _refreshTokenKey = 'refresh_token';
+  late final Dio _dio;
+  final TokenManager _tokenManager;
 
-  ApiClient() {
+  ApiClient({TokenManager? tokenManager})
+      : _tokenManager = tokenManager ?? TokenManager() {
     _dio = Dio(
       BaseOptions(
         baseUrl: AppConfig.apiBaseUrl,
@@ -18,44 +19,46 @@ class ApiClient {
       ),
     );
 
-    // Add interceptor for auth token
     _dio.interceptors.add(
       InterceptorsWrapper(
-        onRequest: (options, handler) async {
-          final token = _storage.read(_tokenKey);
+        onRequest: (options, handler) {
+          final token = _tokenManager.accessToken;
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';
           }
-          return handler.next(options);
+          handler.next(options);
         },
         onError: (error, handler) async {
           if (error.response?.statusCode == 401) {
-            // Try to refresh token
             try {
-              final refreshToken = _storage.read(_refreshTokenKey);
+              final refreshToken = _tokenManager.refreshToken;
               if (refreshToken != null) {
                 final response = await _dio.post(
-                  '/auth/refresh',
-                  data: {'refresh_token': refreshToken},
+                  ApiEndpoints.authRefresh,
+                  data: {StorageKeys.refreshToken: refreshToken},
                 );
 
-                final newToken = response.data['access_token'];
-                await saveToken(newToken);
+                final newToken =
+                    response.data[ApiResponseKeys.accessToken] as String;
+                await _tokenManager.saveAccessToken(newToken);
 
-                // Retry original request
-                final options = error.requestOptions;
-                options.headers['Authorization'] = 'Bearer $newToken';
-                return handler.resolve(await _dio.request(
-                  options.path,
-                  options: options,
-                ));
+                final requestOptions = error.requestOptions;
+                requestOptions.headers['Authorization'] = 'Bearer $newToken';
+                final retryOptions = Options(
+                  method: requestOptions.method,
+                  headers: requestOptions.headers,
+                  contentType: requestOptions.contentType,
+                  responseType: requestOptions.responseType,
+                );
+                return handler.resolve(
+                  await _dio.request(requestOptions.path, options: retryOptions),
+                );
               }
-            } catch (e) {
-              // Logout user
-              await logout();
+            } catch (_) {
+              await _tokenManager.clearTokens();
             }
           }
-          return handler.next(error);
+          handler.next(error);
         },
       ),
     );
@@ -66,11 +69,7 @@ class ApiClient {
     Map<String, dynamic>? queryParameters,
     Options? options,
   }) {
-    return _dio.get(
-      path,
-      queryParameters: queryParameters,
-      options: options,
-    );
+    return _dio.get(path, queryParameters: queryParameters, options: options);
   }
 
   Future<Response> post(
@@ -115,25 +114,13 @@ class ApiClient {
     );
   }
 
-  Future<void> saveToken(String token) async {
-    await _storage.write(_tokenKey, token);
-  }
+  // Delegate token operations to TokenManager
+  Future<void> saveTokens(String accessToken, String refreshToken) =>
+      _tokenManager.saveTokens(accessToken, refreshToken);
 
-  Future<void> saveTokens(String accessToken, String refreshToken) async {
-    await _storage.write(_tokenKey, accessToken);
-    await _storage.write(_refreshTokenKey, refreshToken);
-  }
+  String? getToken() => _tokenManager.accessToken;
 
-  String? getToken() {
-    return _storage.read(_tokenKey);
-  }
+  Future<void> logout() => _tokenManager.clearTokens();
 
-  Future<void> logout() async {
-    await _storage.remove(_tokenKey);
-    await _storage.remove(_refreshTokenKey);
-  }
-
-  bool isAuthenticated() {
-    return _storage.read(_tokenKey) != null;
-  }
+  bool isAuthenticated() => _tokenManager.isAuthenticated;
 }

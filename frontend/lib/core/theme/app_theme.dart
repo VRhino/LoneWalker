@@ -20,7 +20,7 @@ class AppTheme {
   static const Color coolColor = Color(0xFF33CCFF); // Light Blue
   static const Color warmColor = Color(0xFFFFCC00); // Yellow
   static const Color hotColor = Color(0xFFFF6600); // Orange
-  static const Color veryHotColor = Color(0xFF FF0000); // Red
+  static const Color veryHotColor = Color(0xFFFF0000); // Red
 
   // Light Theme
   static final ThemeData lightTheme = ThemeData(
@@ -67,7 +67,7 @@ class AppTheme {
         ),
       ),
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
@@ -120,7 +120,7 @@ class AppTheme {
         ),
       ),
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       elevation: 2,
       color: const Color(0xFF1E1E1E),
       shape: RoundedRectangleBorder(

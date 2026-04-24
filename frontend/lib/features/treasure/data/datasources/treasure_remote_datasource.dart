@@ -1,12 +1,14 @@
 import 'package:dio/dio.dart';
+import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/network/api_client.dart';
 import '../models/treasure_model.dart';
 
 abstract class TreasureRemoteDataSource {
   Future<List<TreasureModel>> getNearby(
     double latitude,
-    double longitude,
-    {int radius = 5000},
-  );
+    double longitude, {
+    int radius,
+  });
 
   Future<List<RadarTreasureModel>> getRadarData(
     double latitude,
@@ -28,19 +30,19 @@ abstract class TreasureRemoteDataSource {
 }
 
 class TreasureRemoteDataSourceImpl implements TreasureRemoteDataSource {
-  final Dio _dio;
+  final ApiClient apiClient;
 
-  TreasureRemoteDataSourceImpl({required Dio dio}) : _dio = dio;
+  TreasureRemoteDataSourceImpl({required this.apiClient});
 
   @override
   Future<List<TreasureModel>> getNearby(
     double latitude,
-    double longitude,
-    {int radius = 5000},
-  ) async {
+    double longitude, {
+    int radius = 5000,
+  }) async {
     try {
-      final response = await _dio.get(
-        '/treasures/nearby',
+      final response = await apiClient.get(
+        ApiEndpoints.treasuresNearby,
         queryParameters: {
           'latitude': latitude,
           'longitude': longitude,
@@ -48,7 +50,7 @@ class TreasureRemoteDataSourceImpl implements TreasureRemoteDataSource {
         },
       );
 
-      if (response.statusCode == 200 && response.data is List) {
+      if (response.data is List) {
         return (response.data as List)
             .map((t) => TreasureModel.fromJson(t as Map<String, dynamic>))
             .toList();
@@ -66,15 +68,15 @@ class TreasureRemoteDataSourceImpl implements TreasureRemoteDataSource {
     double longitude,
   ) async {
     try {
-      final response = await _dio.get(
-        '/treasures/radar',
+      final response = await apiClient.get(
+        ApiEndpoints.treasuresRadar,
         queryParameters: {
           'latitude': latitude,
           'longitude': longitude,
         },
       );
 
-      if (response.statusCode == 200 && response.data is List) {
+      if (response.data is List) {
         return (response.data as List)
             .map((t) => RadarTreasureModel.fromJson(t as Map<String, dynamic>))
             .toList();
@@ -89,13 +91,8 @@ class TreasureRemoteDataSourceImpl implements TreasureRemoteDataSource {
   @override
   Future<TreasureModel> getTreasureById(String treasureId) async {
     try {
-      final response = await _dio.get('/treasures/$treasureId');
-
-      if (response.statusCode == 200) {
-        return TreasureModel.fromJson(response.data as Map<String, dynamic>);
-      }
-
-      throw Exception('Failed to fetch treasure');
+      final response = await apiClient.get(ApiEndpoints.treasureById(treasureId));
+      return TreasureModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw _handleDioException(e);
     }
@@ -109,8 +106,8 @@ class TreasureRemoteDataSourceImpl implements TreasureRemoteDataSource {
     double accuracyMeters,
   ) async {
     try {
-      final response = await _dio.post(
-        '/treasures/$treasureId/claim',
+      final response = await apiClient.post(
+        ApiEndpoints.treasureClaim(treasureId),
         data: {
           'latitude': latitude,
           'longitude': longitude,
@@ -118,11 +115,7 @@ class TreasureRemoteDataSourceImpl implements TreasureRemoteDataSource {
         },
       );
 
-      if (response.statusCode == 200) {
-        return response.data as Map<String, dynamic>;
-      }
-
-      throw Exception('Failed to claim treasure');
+      return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
       throw _handleDioException(e);
     }
@@ -131,9 +124,10 @@ class TreasureRemoteDataSourceImpl implements TreasureRemoteDataSource {
   @override
   Future<List<TreasureWallOfFameModel>> getWallOfFame(String treasureId) async {
     try {
-      final response = await _dio.get('/treasures/$treasureId/wall-of-fame');
+      final response =
+          await apiClient.get(ApiEndpoints.treasureWallOfFame(treasureId));
 
-      if (response.statusCode == 200 && response.data is List) {
+      if (response.data is List) {
         return (response.data as List)
             .map((t) => TreasureWallOfFameModel.fromJson(t as Map<String, dynamic>))
             .toList();
@@ -148,30 +142,29 @@ class TreasureRemoteDataSourceImpl implements TreasureRemoteDataSource {
   @override
   Future<TreasureClaimsStatsModel> getClaimsStats() async {
     try {
-      final response = await _dio.get('/treasures/stats/claims');
-
-      if (response.statusCode == 200) {
-        return TreasureClaimsStatsModel.fromJson(response.data as Map<String, dynamic>);
-      }
-
-      throw Exception('Failed to fetch claims stats');
+      final response = await apiClient.get(ApiEndpoints.treasuresStatsClaims);
+      return TreasureClaimsStatsModel.fromJson(
+          response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw _handleDioException(e);
     }
   }
 
   Exception _handleDioException(DioException e) {
-    if (e.response?.statusCode == 404) {
-      return Exception('Treasure not found');
-    } else if (e.response?.statusCode == 400) {
-      final message = e.response?.data['message'] ?? 'Bad request';
-      return Exception(message);
-    } else if (e.type == DioExceptionType.connectionTimeout) {
-      return Exception('Connection timeout');
-    } else if (e.type == DioExceptionType.unknown) {
-      return Exception('Network error');
+    switch (e.response?.statusCode) {
+      case 400:
+        final message = e.response?.data['message'] ?? 'Bad request';
+        return Exception(message);
+      case 404:
+        return Exception('Treasure not found');
+      default:
+        if (e.type == DioExceptionType.connectionTimeout) {
+          return Exception('Connection timeout');
+        }
+        if (e.type == DioExceptionType.unknown) {
+          return Exception('Network error');
+        }
+        return Exception('Error: ${e.message}');
     }
-
-    return Exception('Error: ${e.message}');
   }
 }

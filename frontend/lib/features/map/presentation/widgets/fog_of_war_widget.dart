@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../../config/app_config.dart';
+import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/map_state.dart';
 
 /// Fog of War Widget
@@ -56,7 +59,7 @@ class FogOfWarPainter extends CustomPainter {
 
   void _paintFogOfWar(Canvas canvas, Size size) {
     final fogPaint = Paint()
-      ..color = Colors.black.withOpacity(0.6)
+      ..color = Colors.black.withValues(alpha: 0.6)
       ..style = PaintingStyle.fill;
 
     // Cover entire canvas with fog
@@ -67,22 +70,18 @@ class FogOfWarPainter extends CustomPainter {
   }
 
   void _paintExploredAreas(Canvas canvas, Size size) {
-    final clearPaint = Paint()
-      ..color = Colors.transparent
-      ..style = PaintingStyle.fill;
-
     final gradientPaint = Paint()
       ..shader = RadialGradient(
         colors: [
           Colors.transparent,
-          Colors.black.withOpacity(0.4),
-          Colors.black.withOpacity(0.6),
+          Colors.black.withValues(alpha: 0.4),
+          Colors.black.withValues(alpha: 0.6),
         ],
         stops: const [0.0, 0.7, 1.0],
       ).createShader(
         Rect.fromCircle(
           center: const Offset(0, 0),
-          radius: 75 * mapZoom,
+          radius: AppConfig.fogOfWarRadius * mapZoom,
         ),
       );
 
@@ -98,7 +97,7 @@ class FogOfWarPainter extends CustomPainter {
             // Clear fog with gradient effect
             canvas.drawCircle(
               offset,
-              75 * mapZoom,
+              AppConfig.fogOfWarRadius * mapZoom,
               gradientPaint,
             );
           }
@@ -120,7 +119,7 @@ class FogOfWarPainter extends CustomPainter {
         offset,
         12 * mapZoom,
         Paint()
-          ..color = const Color(0xFF667BC6).withOpacity(0.3)
+          ..color = AppTheme.primaryColor.withValues(alpha: 0.3)
           ..style = PaintingStyle.fill,
       );
 
@@ -129,7 +128,7 @@ class FogOfWarPainter extends CustomPainter {
         offset,
         8 * mapZoom,
         Paint()
-          ..color = const Color(0xFF667BC6)
+          ..color = AppTheme.primaryColor
           ..style = PaintingStyle.fill,
       );
 
@@ -138,7 +137,7 @@ class FogOfWarPainter extends CustomPainter {
         offset,
         10 * mapZoom,
         Paint()
-          ..color = const Color(0xFF667BC6)
+          ..color = AppTheme.primaryColor
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2,
       );
@@ -152,7 +151,7 @@ class FogOfWarPainter extends CustomPainter {
     final latDiff = (lat - userLocation.latitude).abs();
     final lngDiff = (lng - userLocation.longitude).abs();
 
-    if (latDiff < 0.01 && lngDiff < 0.01) {
+    if (latDiff < AppDimensions.latLngMatchThreshold && lngDiff < AppDimensions.latLngMatchThreshold) {
       return Offset(size.width / 2, size.height / 2);
     }
 
