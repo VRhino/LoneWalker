@@ -13,12 +13,12 @@ class RadarWidget extends StatefulWidget {
   final VoidCallback? onTreasureTap;
 
   const RadarWidget({
-    Key? key,
+    super.key,
     required this.treasures,
     required this.userLatitude,
     required this.userLongitude,
     this.onTreasureTap,
-  }) : super(key: key);
+  });
 
   @override
   State<RadarWidget> createState() => _RadarWidgetState();
@@ -73,8 +73,8 @@ class _RadarWidgetState extends State<RadarWidget> {
   }
 
   Widget _buildTreasureMarkers() {
-    final radarRadius = AppDimensions.radarBaseRadius;
-    final maxDistance = AppConfig.radarDisplayRadiusMeters;
+    const radarRadius = AppDimensions.radarBaseRadius;
+    const maxDistance = AppConfig.radarDisplayRadiusMeters;
 
     return Stack(
       alignment: Alignment.center,
@@ -126,7 +126,7 @@ class _RadarWidgetState extends State<RadarWidget> {
               ),
             ),
           );
-        }).toList(),
+        }),
         // North indicator
         Positioned(
           top: 8,
@@ -170,7 +170,7 @@ class RadarPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final baseRadius = AppDimensions.radarBaseRadius;
+    const baseRadius = AppDimensions.radarBaseRadius;
 
     // Draw background
     canvas.drawCircle(
@@ -269,7 +269,7 @@ class RadarPainter extends CustomPainter {
   }
 
   void _drawGridLines(Canvas canvas, Offset center, double radius) {
-    final gridLines = AppDimensions.radarGridLineCount;
+    const gridLines = AppDimensions.radarGridLineCount;
 
     for (int i = 0; i < gridLines; i++) {
       final angle = (i * 360 / gridLines) * (math.pi / 180);

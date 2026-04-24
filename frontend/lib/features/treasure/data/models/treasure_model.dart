@@ -62,38 +62,22 @@ extension TreasureStatusX on TreasureStatus {
 
 class TreasureModel extends Treasure {
   const TreasureModel({
-    required String id,
-    required String title,
-    required String description,
-    required double latitude,
-    required double longitude,
-    required TreasureStatus status,
-    required TreasureRarity rarity,
-    int? maxUses,
-    required int currentUses,
-    int? usesRemaining,
-    String? photoUrl,
-    String? stlFileUrl,
-    required bool claimedByUser,
-    required DateTime createdAt,
-    required DateTime updatedAt,
-  }) : super(
-          id: id,
-          title: title,
-          description: description,
-          latitude: latitude,
-          longitude: longitude,
-          status: status,
-          rarity: rarity,
-          maxUses: maxUses,
-          currentUses: currentUses,
-          usesRemaining: usesRemaining,
-          photoUrl: photoUrl,
-          stlFileUrl: stlFileUrl,
-          claimedByUser: claimedByUser,
-          createdAt: createdAt,
-          updatedAt: updatedAt,
-        );
+    required super.id,
+    required super.title,
+    required super.description,
+    required super.latitude,
+    required super.longitude,
+    required super.status,
+    required super.rarity,
+    super.maxUses,
+    required super.currentUses,
+    super.usesRemaining,
+    super.photoUrl,
+    super.stlFileUrl,
+    required super.claimedByUser,
+    required super.createdAt,
+    required super.updatedAt,
+  });
 
   factory TreasureModel.fromJson(Map<String, dynamic> json) {
     return TreasureModel(
@@ -136,26 +120,16 @@ class TreasureModel extends Treasure {
 
 class RadarTreasureModel extends RadarTreasure {
   const RadarTreasureModel({
-    required String treasureId,
-    required String title,
-    required double latitude,
-    required double longitude,
-    required TreasureRarity rarity,
-    required double distanceMeters,
-    required double bearingDegrees,
-    required double proximityPercent,
-    required bool canClaim,
-  }) : super(
-          treasureId: treasureId,
-          title: title,
-          latitude: latitude,
-          longitude: longitude,
-          rarity: rarity,
-          distanceMeters: distanceMeters,
-          bearingDegrees: bearingDegrees,
-          proximityPercent: proximityPercent,
-          canClaim: canClaim,
-        );
+    required super.treasureId,
+    required super.title,
+    required super.latitude,
+    required super.longitude,
+    required super.rarity,
+    required super.distanceMeters,
+    required super.bearingDegrees,
+    required super.proximityPercent,
+    required super.canClaim,
+  });
 
   factory RadarTreasureModel.fromJson(Map<String, dynamic> json) {
     return RadarTreasureModel(
@@ -186,20 +160,13 @@ class RadarTreasureModel extends RadarTreasure {
 
 class TreasureWallOfFameModel extends TreasureWallOfFame {
   const TreasureWallOfFameModel({
-    required String userId,
-    required String username,
-    required DateTime claimedAt,
-    required int xpEarned,
-    required double distanceMeters,
-    required int gpsValidationTimeMs,
-  }) : super(
-          userId: userId,
-          username: username,
-          claimedAt: claimedAt,
-          xpEarned: xpEarned,
-          distanceMeters: distanceMeters,
-          gpsValidationTimeMs: gpsValidationTimeMs,
-        );
+    required super.userId,
+    required super.username,
+    required super.claimedAt,
+    required super.xpEarned,
+    required super.distanceMeters,
+    required super.gpsValidationTimeMs,
+  });
 
   factory TreasureWallOfFameModel.fromJson(Map<String, dynamic> json) {
     return TreasureWallOfFameModel(
@@ -215,14 +182,10 @@ class TreasureWallOfFameModel extends TreasureWallOfFame {
 
 class TreasureClaimsStatsModel extends TreasureClaimsStats {
   const TreasureClaimsStatsModel({
-    required int totalClaimed,
-    required int totalXp,
-    required Map<TreasureRarity, int> byRarity,
-  }) : super(
-          totalClaimed: totalClaimed,
-          totalXp: totalXp,
-          byRarity: byRarity,
-        );
+    required super.totalClaimed,
+    required super.totalXp,
+    required super.byRarity,
+  });
 
   factory TreasureClaimsStatsModel.fromJson(Map<String, dynamic> json) {
     final byRarityData = json['by_rarity'] as Map<String, dynamic>? ?? {};

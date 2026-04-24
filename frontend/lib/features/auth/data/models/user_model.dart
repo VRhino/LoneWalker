@@ -2,28 +2,17 @@ import '../../domain/entities/user.dart';
 
 class UserModel extends User {
   const UserModel({
-    required String id,
-    required String username,
-    required String email,
-    String? avatarUrl,
-    required String privacyMode,
-    required double explorationPercent,
-    required int totalXp,
-    required int medalsCount,
-    required DateTime createdAt,
-    required DateTime updatedAt,
-  }) : super(
-          id: id,
-          username: username,
-          email: email,
-          avatarUrl: avatarUrl,
-          privacyMode: privacyMode,
-          explorationPercent: explorationPercent,
-          totalXp: totalXp,
-          medalsCount: medalsCount,
-          createdAt: createdAt,
-          updatedAt: updatedAt,
-        );
+    required super.id,
+    required super.username,
+    required super.email,
+    super.avatarUrl,
+    required super.privacyMode,
+    required super.explorationPercent,
+    required super.totalXp,
+    required super.medalsCount,
+    required super.createdAt,
+    required super.updatedAt,
+  });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(

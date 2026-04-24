@@ -2,14 +2,10 @@ import '../../domain/entities/map_state.dart';
 
 class MapLocationModel extends MapLocation {
   const MapLocationModel({
-    required double latitude,
-    required double longitude,
-    required double accuracy,
-  }) : super(
-          latitude: latitude,
-          longitude: longitude,
-          accuracy: accuracy,
-        );
+    required super.latitude,
+    required super.longitude,
+    required super.accuracy,
+  });
 
   factory MapLocationModel.fromJson(Map<String, dynamic> json) {
     return MapLocationModel(
@@ -28,18 +24,12 @@ class MapLocationModel extends MapLocation {
 
 class ExplorationStatsModel extends ExplorationStats {
   const ExplorationStatsModel({
-    required double explorationPercent,
-    required int totalXp,
-    required double newAreasCleared,
-    required int xpEarned,
-    required List<DistrictExploration> districts,
-  }) : super(
-          explorationPercent: explorationPercent,
-          totalXp: totalXp,
-          newAreasCleared: newAreasCleared,
-          xpEarned: xpEarned,
-          districts: districts,
-        );
+    required super.explorationPercent,
+    required super.totalXp,
+    required super.newAreasCleared,
+    required super.xpEarned,
+    required super.districts,
+  });
 
   factory ExplorationStatsModel.fromJson(Map<String, dynamic> json) {
     return ExplorationStatsModel(
@@ -71,16 +61,11 @@ class ExplorationStatsModel extends ExplorationStats {
 
 class DistrictExplorationModel extends DistrictExploration {
   const DistrictExplorationModel({
-    required String districtId,
-    required String name,
-    required double explorationPercent,
-    required String masteryLevel,
-  }) : super(
-          districtId: districtId,
-          name: name,
-          explorationPercent: explorationPercent,
-          masteryLevel: masteryLevel,
-        );
+    required super.districtId,
+    required super.name,
+    required super.explorationPercent,
+    required super.masteryLevel,
+  });
 
   factory DistrictExplorationModel.fromJson(Map<String, dynamic> json) {
     return DistrictExplorationModel(

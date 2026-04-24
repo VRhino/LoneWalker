@@ -36,7 +36,7 @@ final testTreasure = TreasureModel(
   updatedAt: DateTime(2024, 1, 1),
 );
 
-final testRadarTreasure = RadarTreasureModel(
+const testRadarTreasure = RadarTreasureModel(
   treasureId: 'treasure-1',
   title: 'Radar Treasure',
   latitude: 40.417,
@@ -48,7 +48,7 @@ final testRadarTreasure = RadarTreasureModel(
   canClaim: false,
 );
 
-final testStats = ExplorationStatsModel(
+const testStats = ExplorationStatsModel(
   explorationPercent: 5.5,
   totalXp: 100,
   newAreasCleared: 3.0,

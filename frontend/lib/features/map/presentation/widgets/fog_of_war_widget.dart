@@ -13,12 +13,12 @@ class FogOfWarWidget extends StatelessWidget {
   final Size canvasSize;
 
   const FogOfWarWidget({
-    Key? key,
+    super.key,
     required this.userLocation,
     required this.exploredAreas,
     required this.mapZoom,
     required this.canvasSize,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

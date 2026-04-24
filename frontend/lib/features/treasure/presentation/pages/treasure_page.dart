@@ -12,7 +12,7 @@ import '../utils/treasure_rarity_colors.dart';
 import '../widgets/radar_widget.dart';
 
 class TreasurePage extends StatefulWidget {
-  const TreasurePage({Key? key}) : super(key: key);
+  const TreasurePage({super.key});
 
   @override
   State<TreasurePage> createState() => _TreasurePageState();

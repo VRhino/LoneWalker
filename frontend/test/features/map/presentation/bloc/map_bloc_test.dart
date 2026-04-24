@@ -148,7 +148,7 @@ void main() {
       blocTest<MapBloc, MapState>(
         'actualiza explorationStats cuando el estado es MapLoaded',
         setUp: () {
-          fakeDataSource.statsToReturn = ExplorationStatsModel(
+          fakeDataSource.statsToReturn = const ExplorationStatsModel(
             explorationPercent: 15.0,
             totalXp: 300,
             newAreasCleared: 8.0,
@@ -157,14 +157,14 @@ void main() {
           );
         },
         build: () => MapBloc(remoteDataSource: fakeDataSource),
-        seed: () => MapLoaded(
-          userLocation: const MapLocationModel(
+        seed: () => const MapLoaded(
+          userLocation: MapLocationModel(
             latitude: 40.4168,
             longitude: -3.7038,
             accuracy: 10.0,
           ),
           explorationStats: testStats,
-          mapData: const {},
+          mapData: {},
         ),
         act: (b) => b.add(const LoadProgressEvent()),
         expect: () => [

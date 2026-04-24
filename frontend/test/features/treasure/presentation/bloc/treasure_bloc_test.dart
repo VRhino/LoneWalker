@@ -41,7 +41,7 @@ void main() {
         'emite [TreasureLoading, RadarActive] vacío cuando no hay tesoros cercanos',
         setUp: () {
           fakeDataSource.radarData = [
-            RadarTreasureModel(
+            const RadarTreasureModel(
               treasureId: 'far-1',
               title: 'Distant Treasure',
               latitude: 41.0,
@@ -219,7 +219,7 @@ void main() {
           fakeDataSource.radarData = [testRadarTreasure];
         },
         build: () => TreasureBloc(remoteDataSource: fakeDataSource),
-        seed: () => RadarActive(
+        seed: () => const RadarActive(
           treasures: [testRadarTreasure],
           userLatitude: 40.4168,
           userLongitude: -3.7038,
