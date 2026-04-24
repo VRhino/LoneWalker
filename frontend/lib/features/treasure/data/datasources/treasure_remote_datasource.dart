@@ -91,7 +91,8 @@ class TreasureRemoteDataSourceImpl implements TreasureRemoteDataSource {
   @override
   Future<TreasureModel> getTreasureById(String treasureId) async {
     try {
-      final response = await apiClient.get(ApiEndpoints.treasureById(treasureId));
+      final response =
+          await apiClient.get(ApiEndpoints.treasureById(treasureId));
       return TreasureModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw _handleDioException(e);
@@ -129,7 +130,8 @@ class TreasureRemoteDataSourceImpl implements TreasureRemoteDataSource {
 
       if (response.data is List) {
         return (response.data as List)
-            .map((t) => TreasureWallOfFameModel.fromJson(t as Map<String, dynamic>))
+            .map((t) =>
+                TreasureWallOfFameModel.fromJson(t as Map<String, dynamic>))
             .toList();
       }
 

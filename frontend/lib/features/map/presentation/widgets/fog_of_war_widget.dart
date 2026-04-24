@@ -151,7 +151,8 @@ class FogOfWarPainter extends CustomPainter {
     final latDiff = (lat - userLocation.latitude).abs();
     final lngDiff = (lng - userLocation.longitude).abs();
 
-    if (latDiff < AppDimensions.latLngMatchThreshold && lngDiff < AppDimensions.latLngMatchThreshold) {
+    if (latDiff < AppDimensions.latLngMatchThreshold &&
+        lngDiff < AppDimensions.latLngMatchThreshold) {
       return Offset(size.width / 2, size.height / 2);
     }
 

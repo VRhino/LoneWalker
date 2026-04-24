@@ -40,13 +40,13 @@ class _RegisterPageState extends State<RegisterPage> {
   void _handleRegister() {
     if (_formKey.currentState!.validate()) {
       context.read<AuthBloc>().add(
-        AuthRegisterEvent(
-          username: _usernameController.text.trim(),
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-          passwordConfirm: _passwordConfirmController.text,
-        ),
-      );
+            AuthRegisterEvent(
+              username: _usernameController.text.trim(),
+              email: _emailController.text.trim(),
+              password: _passwordController.text,
+              passwordConfirm: _passwordConfirmController.text,
+            ),
+          );
     }
   }
 
@@ -150,7 +150,8 @@ class _RegisterPageState extends State<RegisterPage> {
                           if (value?.isEmpty ?? true) {
                             return 'Email is required';
                           }
-                          if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value!)) {
+                          if (!RegExp(r'^[^@]+@[^@]+\.[^@]+')
+                              .hasMatch(value!)) {
                             return 'Invalid email';
                           }
                           return null;
@@ -239,17 +240,16 @@ class _RegisterPageState extends State<RegisterPage> {
                           return SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
-                              onPressed: state is AuthLoading
-                                  ? null
-                                  : _handleRegister,
+                              onPressed:
+                                  state is AuthLoading ? null : _handleRegister,
                               child: state is AuthLoading
                                   ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
                                   : const Text('Register'),
                             ),
                           );

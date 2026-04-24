@@ -8,7 +8,8 @@ import 'treasure_state.dart';
 class TreasureBloc extends Bloc<TreasureEvent, TreasureState> {
   final TreasureRemoteDataSource remoteDataSource;
 
-  TreasureBloc({required this.remoteDataSource}) : super(const TreasureInitial()) {
+  TreasureBloc({required this.remoteDataSource})
+      : super(const TreasureInitial()) {
     on<ActivateRadarEvent>(_onActivateRadar);
     on<UpdateRadarPositionEvent>(_onUpdateRadarPosition);
     on<LoadNearbyTreasuresEvent>(_onLoadNearbyTreasures);
@@ -123,7 +124,8 @@ class TreasureBloc extends Bloc<TreasureEvent, TreasureState> {
     try {
       if (event.accuracyMeters > AppConfig.gpsAccuracyThreshold) {
         emit(TreasureError(
-          message: 'GPS accuracy insufficient: ${event.accuracyMeters.toStringAsFixed(1)}m',
+          message:
+              'GPS accuracy insufficient: ${event.accuracyMeters.toStringAsFixed(1)}m',
         ));
         return;
       }
@@ -147,7 +149,8 @@ class TreasureBloc extends Bloc<TreasureEvent, TreasureState> {
       emit(TreasureClaimSuccess(
         treasure: _mapToTreasure(treasure),
         xpEarned: xpEarned,
-        message: result['message'] as String? ?? 'Treasure claimed successfully!',
+        message:
+            result['message'] as String? ?? 'Treasure claimed successfully!',
       ));
     } catch (e) {
       emit(TreasureError(message: e.toString()));

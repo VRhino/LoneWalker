@@ -78,22 +78,22 @@ class TreasureModel extends Treasure {
     required DateTime createdAt,
     required DateTime updatedAt,
   }) : super(
-    id: id,
-    title: title,
-    description: description,
-    latitude: latitude,
-    longitude: longitude,
-    status: status,
-    rarity: rarity,
-    maxUses: maxUses,
-    currentUses: currentUses,
-    usesRemaining: usesRemaining,
-    photoUrl: photoUrl,
-    stlFileUrl: stlFileUrl,
-    claimedByUser: claimedByUser,
-    createdAt: createdAt,
-    updatedAt: updatedAt,
-  );
+          id: id,
+          title: title,
+          description: description,
+          latitude: latitude,
+          longitude: longitude,
+          status: status,
+          rarity: rarity,
+          maxUses: maxUses,
+          currentUses: currentUses,
+          usesRemaining: usesRemaining,
+          photoUrl: photoUrl,
+          stlFileUrl: stlFileUrl,
+          claimedByUser: claimedByUser,
+          createdAt: createdAt,
+          updatedAt: updatedAt,
+        );
 
   factory TreasureModel.fromJson(Map<String, dynamic> json) {
     return TreasureModel(
@@ -116,22 +116,22 @@ class TreasureModel extends Treasure {
   }
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'title': title,
-    'description': description,
-    'latitude': latitude,
-    'longitude': longitude,
-    'status': status.stringValue,
-    'rarity': rarity.stringValue,
-    'max_uses': maxUses,
-    'current_uses': currentUses,
-    'uses_remaining': usesRemaining,
-    'photo_url': photoUrl,
-    'stl_file_url': stlFileUrl,
-    'claimed_by_user': claimedByUser,
-    'created_at': createdAt.toIso8601String(),
-    'updated_at': updatedAt.toIso8601String(),
-  };
+        'id': id,
+        'title': title,
+        'description': description,
+        'latitude': latitude,
+        'longitude': longitude,
+        'status': status.stringValue,
+        'rarity': rarity.stringValue,
+        'max_uses': maxUses,
+        'current_uses': currentUses,
+        'uses_remaining': usesRemaining,
+        'photo_url': photoUrl,
+        'stl_file_url': stlFileUrl,
+        'claimed_by_user': claimedByUser,
+        'created_at': createdAt.toIso8601String(),
+        'updated_at': updatedAt.toIso8601String(),
+      };
 }
 
 class RadarTreasureModel extends RadarTreasure {
@@ -146,16 +146,16 @@ class RadarTreasureModel extends RadarTreasure {
     required double proximityPercent,
     required bool canClaim,
   }) : super(
-    treasureId: treasureId,
-    title: title,
-    latitude: latitude,
-    longitude: longitude,
-    rarity: rarity,
-    distanceMeters: distanceMeters,
-    bearingDegrees: bearingDegrees,
-    proximityPercent: proximityPercent,
-    canClaim: canClaim,
-  );
+          treasureId: treasureId,
+          title: title,
+          latitude: latitude,
+          longitude: longitude,
+          rarity: rarity,
+          distanceMeters: distanceMeters,
+          bearingDegrees: bearingDegrees,
+          proximityPercent: proximityPercent,
+          canClaim: canClaim,
+        );
 
   factory RadarTreasureModel.fromJson(Map<String, dynamic> json) {
     return RadarTreasureModel(
@@ -172,16 +172,16 @@ class RadarTreasureModel extends RadarTreasure {
   }
 
   Map<String, dynamic> toJson() => {
-    'treasure_id': treasureId,
-    'title': title,
-    'latitude': latitude,
-    'longitude': longitude,
-    'rarity': rarity.stringValue,
-    'distance_meters': distanceMeters,
-    'bearing_degrees': bearingDegrees,
-    'proximity_percent': proximityPercent,
-    'can_claim': canClaim,
-  };
+        'treasure_id': treasureId,
+        'title': title,
+        'latitude': latitude,
+        'longitude': longitude,
+        'rarity': rarity.stringValue,
+        'distance_meters': distanceMeters,
+        'bearing_degrees': bearingDegrees,
+        'proximity_percent': proximityPercent,
+        'can_claim': canClaim,
+      };
 }
 
 class TreasureWallOfFameModel extends TreasureWallOfFame {
@@ -193,13 +193,13 @@ class TreasureWallOfFameModel extends TreasureWallOfFame {
     required double distanceMeters,
     required int gpsValidationTimeMs,
   }) : super(
-    userId: userId,
-    username: username,
-    claimedAt: claimedAt,
-    xpEarned: xpEarned,
-    distanceMeters: distanceMeters,
-    gpsValidationTimeMs: gpsValidationTimeMs,
-  );
+          userId: userId,
+          username: username,
+          claimedAt: claimedAt,
+          xpEarned: xpEarned,
+          distanceMeters: distanceMeters,
+          gpsValidationTimeMs: gpsValidationTimeMs,
+        );
 
   factory TreasureWallOfFameModel.fromJson(Map<String, dynamic> json) {
     return TreasureWallOfFameModel(
@@ -219,10 +219,10 @@ class TreasureClaimsStatsModel extends TreasureClaimsStats {
     required int totalXp,
     required Map<TreasureRarity, int> byRarity,
   }) : super(
-    totalClaimed: totalClaimed,
-    totalXp: totalXp,
-    byRarity: byRarity,
-  );
+          totalClaimed: totalClaimed,
+          totalXp: totalXp,
+          byRarity: byRarity,
+        );
 
   factory TreasureClaimsStatsModel.fromJson(Map<String, dynamic> json) {
     final byRarityData = json['by_rarity'] as Map<String, dynamic>? ?? {};

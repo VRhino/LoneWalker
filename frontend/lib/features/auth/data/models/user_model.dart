@@ -13,17 +13,17 @@ class UserModel extends User {
     required DateTime createdAt,
     required DateTime updatedAt,
   }) : super(
-    id: id,
-    username: username,
-    email: email,
-    avatarUrl: avatarUrl,
-    privacyMode: privacyMode,
-    explorationPercent: explorationPercent,
-    totalXp: totalXp,
-    medalsCount: medalsCount,
-    createdAt: createdAt,
-    updatedAt: updatedAt,
-  );
+          id: id,
+          username: username,
+          email: email,
+          avatarUrl: avatarUrl,
+          privacyMode: privacyMode,
+          explorationPercent: explorationPercent,
+          totalXp: totalXp,
+          medalsCount: medalsCount,
+          createdAt: createdAt,
+          updatedAt: updatedAt,
+        );
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
@@ -32,7 +32,8 @@ class UserModel extends User {
       email: json['email'] as String,
       avatarUrl: json['avatar_url'] as String?,
       privacyMode: json['privacy_mode'] as String? ?? 'PUBLIC',
-      explorationPercent: (json['exploration_percent'] as num?)?.toDouble() ?? 0.0,
+      explorationPercent:
+          (json['exploration_percent'] as num?)?.toDouble() ?? 0.0,
       totalXp: json['total_xp'] as int? ?? 0,
       medalsCount: json['medals_count'] as int? ?? 0,
       createdAt: DateTime.parse(json['created_at'] as String),

@@ -6,10 +6,10 @@ class MapLocationModel extends MapLocation {
     required double longitude,
     required double accuracy,
   }) : super(
-    latitude: latitude,
-    longitude: longitude,
-    accuracy: accuracy,
-  );
+          latitude: latitude,
+          longitude: longitude,
+          accuracy: accuracy,
+        );
 
   factory MapLocationModel.fromJson(Map<String, dynamic> json) {
     return MapLocationModel(
@@ -20,10 +20,10 @@ class MapLocationModel extends MapLocation {
   }
 
   Map<String, dynamic> toJson() => {
-    'latitude': latitude,
-    'longitude': longitude,
-    'accuracy_meters': accuracy,
-  };
+        'latitude': latitude,
+        'longitude': longitude,
+        'accuracy_meters': accuracy,
+      };
 }
 
 class ExplorationStatsModel extends ExplorationStats {
@@ -34,12 +34,12 @@ class ExplorationStatsModel extends ExplorationStats {
     required int xpEarned,
     required List<DistrictExploration> districts,
   }) : super(
-    explorationPercent: explorationPercent,
-    totalXp: totalXp,
-    newAreasCleared: newAreasCleared,
-    xpEarned: xpEarned,
-    districts: districts,
-  );
+          explorationPercent: explorationPercent,
+          totalXp: totalXp,
+          newAreasCleared: newAreasCleared,
+          xpEarned: xpEarned,
+          districts: districts,
+        );
 
   factory ExplorationStatsModel.fromJson(Map<String, dynamic> json) {
     return ExplorationStatsModel(
@@ -54,19 +54,19 @@ class ExplorationStatsModel extends ExplorationStats {
   }
 
   Map<String, dynamic> toJson() => {
-    'exploration_percent': explorationPercent,
-    'total_xp': totalXp,
-    'new_areas_cleared': newAreasCleared,
-    'xp_earned': xpEarned,
-    'districts_explored': districts
-        .map((d) => {
-          'district_id': d.districtId,
-          'name': d.name,
-          'exploration_percent': d.explorationPercent,
-          'mastery_level': d.masteryLevel,
-        })
-        .toList(),
-  };
+        'exploration_percent': explorationPercent,
+        'total_xp': totalXp,
+        'new_areas_cleared': newAreasCleared,
+        'xp_earned': xpEarned,
+        'districts_explored': districts
+            .map((d) => {
+                  'district_id': d.districtId,
+                  'name': d.name,
+                  'exploration_percent': d.explorationPercent,
+                  'mastery_level': d.masteryLevel,
+                })
+            .toList(),
+      };
 }
 
 class DistrictExplorationModel extends DistrictExploration {
@@ -76,11 +76,11 @@ class DistrictExplorationModel extends DistrictExploration {
     required double explorationPercent,
     required String masteryLevel,
   }) : super(
-    districtId: districtId,
-    name: name,
-    explorationPercent: explorationPercent,
-    masteryLevel: masteryLevel,
-  );
+          districtId: districtId,
+          name: name,
+          explorationPercent: explorationPercent,
+          masteryLevel: masteryLevel,
+        );
 
   factory DistrictExplorationModel.fromJson(Map<String, dynamic> json) {
     return DistrictExplorationModel(
@@ -92,9 +92,9 @@ class DistrictExplorationModel extends DistrictExploration {
   }
 
   Map<String, dynamic> toJson() => {
-    'district_id': districtId,
-    'name': name,
-    'exploration_percent': explorationPercent,
-    'mastery_level': masteryLevel,
-  };
+        'district_id': districtId,
+        'name': name,
+        'exploration_percent': explorationPercent,
+        'mastery_level': masteryLevel,
+      };
 }

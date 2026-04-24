@@ -47,12 +47,12 @@ class ExplorationStats extends Equatable {
 
   @override
   List<Object?> get props => [
-    explorationPercent,
-    totalXp,
-    newAreasCleared,
-    xpEarned,
-    districts,
-  ];
+        explorationPercent,
+        totalXp,
+        newAreasCleared,
+        xpEarned,
+        districts,
+      ];
 }
 
 class DistrictExploration extends Equatable {
@@ -69,5 +69,6 @@ class DistrictExploration extends Equatable {
   });
 
   @override
-  List<Object?> get props => [districtId, name, explorationPercent, masteryLevel];
+  List<Object?> get props =>
+      [districtId, name, explorationPercent, masteryLevel];
 }

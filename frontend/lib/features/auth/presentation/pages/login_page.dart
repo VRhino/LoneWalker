@@ -35,11 +35,11 @@ class _LoginPageState extends State<LoginPage> {
   void _handleLogin() {
     if (_formKey.currentState!.validate()) {
       context.read<AuthBloc>().add(
-        AuthLoginEvent(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-        ),
-      );
+            AuthLoginEvent(
+              email: _emailController.text.trim(),
+              password: _passwordController.text,
+            ),
+          );
     }
   }
 
@@ -118,7 +118,8 @@ class _LoginPageState extends State<LoginPage> {
                           if (value?.isEmpty ?? true) {
                             return 'Email is required';
                           }
-                          if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value!)) {
+                          if (!RegExp(r'^[^@]+@[^@]+\.[^@]+')
+                              .hasMatch(value!)) {
                             return 'Invalid email';
                           }
                           return null;
@@ -171,12 +172,12 @@ class _LoginPageState extends State<LoginPage> {
                                   state is AuthLoading ? null : _handleLogin,
                               child: state is AuthLoading
                                   ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
                                   : const Text('Login'),
                             ),
                           );

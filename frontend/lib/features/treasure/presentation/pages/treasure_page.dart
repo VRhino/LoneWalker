@@ -156,16 +156,18 @@ class _TreasurePageState extends State<TreasurePage> {
     );
   }
 
-  Widget _buildTreasuresList(BuildContext context, List<RadarTreasureModel> treasures) {
+  Widget _buildTreasuresList(
+      BuildContext context, List<RadarTreasureModel> treasures) {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: treasures.length,
       itemBuilder: (context, index) {
         final treasure = treasures[index];
-        final proximityColor = treasure.proximityPercent < AppDimensions.proximityThreshold
-            ? Colors.blue
-            : Colors.red;
+        final proximityColor =
+            treasure.proximityPercent < AppDimensions.proximityThreshold
+                ? Colors.blue
+                : Colors.red;
 
         return Card(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -291,7 +293,8 @@ class _TreasurePageState extends State<TreasurePage> {
                   ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: state.wallOfFame.length.clamp(0, AppDimensions.wallOfFameMaxItems),
+                    itemCount: state.wallOfFame.length
+                        .clamp(0, AppDimensions.wallOfFameMaxItems),
                     itemBuilder: (context, index) {
                       final claim = state.wallOfFame[index];
                       return ListTile(
@@ -347,9 +350,9 @@ class _TreasurePageState extends State<TreasurePage> {
           ElevatedButton(
             onPressed: () {
               context.read<TreasureBloc>().add(const ActivateRadarEvent(
-                latitude: AppConfig.defaultLatitude,
-                longitude: AppConfig.defaultLongitude,
-              ));
+                    latitude: AppConfig.defaultLatitude,
+                    longitude: AppConfig.defaultLongitude,
+                  ));
             },
             child: const Text('Back to Radar'),
           ),
@@ -370,9 +373,9 @@ class _TreasurePageState extends State<TreasurePage> {
           ElevatedButton(
             onPressed: () {
               context.read<TreasureBloc>().add(const ActivateRadarEvent(
-                latitude: AppConfig.defaultLatitude,
-                longitude: AppConfig.defaultLongitude,
-              ));
+                    latitude: AppConfig.defaultLatitude,
+                    longitude: AppConfig.defaultLongitude,
+                  ));
             },
             child: const Text('Retry'),
           ),

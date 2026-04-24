@@ -61,9 +61,8 @@ class _RadarWidgetState extends State<RadarWidget> {
               painter: RadarPainter(
                 treasures: widget.treasures,
                 heading: heading,
-                proximityPercents: widget.treasures
-                    .map((t) => t.proximityPercent)
-                    .toList(),
+                proximityPercents:
+                    widget.treasures.map((t) => t.proximityPercent).toList(),
               ),
               child: _buildTreasureMarkers(),
             ),
@@ -88,7 +87,8 @@ class _RadarWidgetState extends State<RadarWidget> {
           final x = radarDist * math.sin(angle);
           final y = -radarDist * math.cos(angle);
 
-          final color = TreasureRarityColors.proximityColor(treasure.proximityPercent);
+          final color =
+              TreasureRarityColors.proximityColor(treasure.proximityPercent);
 
           return Positioned(
             left: radarRadius + x - AppDimensions.radarMarkerOffset,
@@ -234,7 +234,8 @@ class RadarPainter extends CustomPainter {
     }
   }
 
-  void _drawCompassRose(Canvas canvas, Offset center, double radius, double heading) {
+  void _drawCompassRose(
+      Canvas canvas, Offset center, double radius, double heading) {
     final angle = heading * (math.pi / 180);
     final arrowRadius = radius - AppDimensions.radarCompassArrowInset;
 

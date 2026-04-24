@@ -29,7 +29,6 @@ class _MapPageState extends State<MapPage> {
     mapController = controller;
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -148,7 +147,8 @@ class _MapPageState extends State<MapPage> {
                   int totalXp = 0;
 
                   if (state is MapLoaded) {
-                    explorationPercent = state.explorationStats.explorationPercent;
+                    explorationPercent =
+                        state.explorationStats.explorationPercent;
                     totalXp = state.explorationStats.totalXp;
                   } else if (state is ExplorationRegistered) {
                     explorationPercent = state.stats.explorationPercent;

@@ -51,7 +51,8 @@ class ApiClient {
                   responseType: requestOptions.responseType,
                 );
                 return handler.resolve(
-                  await _dio.request(requestOptions.path, options: retryOptions),
+                  await _dio.request(requestOptions.path,
+                      options: retryOptions),
                 );
               }
             } catch (_) {
