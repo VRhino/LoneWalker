@@ -8,16 +8,14 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:lonewalker/main.dart';
+import 'helpers/test_fakes.dart';
 
 void main() {
-  testWidgets('App smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('App smoke test — splash screen visible on startup',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(MyApp(apiClient: FakeApiClient()));
 
-    // Verify that the app title is present.
+    // Splash screen is shown while AuthBloc checks session status
     expect(find.text('LoneWalker'), findsAtLeastNWidgets(1));
-
-    // Verify that the boilerplate status is shown.
-    expect(find.text('✅ Frontend boilerplate initialized'), findsOneWidget);
   });
 }

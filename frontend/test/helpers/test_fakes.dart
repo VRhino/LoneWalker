@@ -65,6 +65,7 @@ class FakeTokenManager implements TokenManager {
   void setAuthenticated(bool value) {
     _accessToken = value ? 'fake_access_token' : null;
     _refreshToken = value ? 'fake_refresh_token' : null;
+    _userData = value ? testUser.toJson() : null;
   }
 
   @override
@@ -91,6 +92,22 @@ class FakeTokenManager implements TokenManager {
   Future<void> clearTokens() async {
     _accessToken = null;
     _refreshToken = null;
+    _userData = null;
+  }
+
+  Map<String, dynamic>? _userData;
+
+  @override
+  Future<void> saveUserData(Map<String, dynamic> json) async {
+    _userData = json;
+  }
+
+  @override
+  Map<String, dynamic>? getUserData() => _userData;
+
+  @override
+  Future<void> clearUserData() async {
+    _userData = null;
   }
 }
 
@@ -158,6 +175,9 @@ class FakeAuthRemoteDataSource extends AuthRemoteDataSource {
     if (logoutShouldFail) throw Exception('Logout failed');
     await apiClient.logout();
   }
+
+  @override
+  Future<bool> verifyToken() async => true;
 }
 
 // ─── Fake Treasure DataSource ─────────────────────────────────────────────────

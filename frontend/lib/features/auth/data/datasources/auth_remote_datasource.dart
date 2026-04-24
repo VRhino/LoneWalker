@@ -76,6 +76,20 @@ class AuthRemoteDataSource {
     }
   }
 
+  /// Returns true if the token is valid, false if both access and refresh
+  /// tokens are expired (server returned 401 after auto-refresh attempt).
+  /// Throws on network errors so callers can distinguish auth failure from
+  /// connectivity issues.
+  Future<bool> verifyToken() async {
+    try {
+      await apiClient.get(ApiEndpoints.authVerify);
+      return true;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) return false;
+      throw _handleDioException(e);
+    }
+  }
+
   Exception _handleDioException(DioException e) {
     switch (e.response?.statusCode) {
       case 401:
@@ -83,7 +97,10 @@ class AuthRemoteDataSource {
       case 409:
         return Exception('Email or username already exists');
       case 400:
-        final message = e.response?.data['message'] as String?;
+        final rawMessage = e.response?.data['message'];
+        final String? message = rawMessage is List<dynamic>
+            ? rawMessage.join(', ')
+            : rawMessage as String?;
         return Exception(message ?? 'Invalid input');
       default:
         return Exception(e.message ?? 'An error occurred');

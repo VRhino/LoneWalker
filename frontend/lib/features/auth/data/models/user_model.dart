@@ -22,7 +22,7 @@ class UserModel extends User {
       avatarUrl: json['avatar_url'] as String?,
       privacyMode: json['privacy_mode'] as String? ?? 'PUBLIC',
       explorationPercent:
-          (json['exploration_percent'] as num?)?.toDouble() ?? 0.0,
+          double.tryParse(json['exploration_percent']?.toString() ?? '') ?? 0.0,
       totalXp: json['total_xp'] as int? ?? 0,
       medalsCount: json['medals_count'] as int? ?? 0,
       createdAt: DateTime.parse(json['created_at'] as String),

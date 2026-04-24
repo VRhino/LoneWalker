@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsString } from 'class-validator';
 import { JWT_DEFAULT_EXPIRATION_S } from '../../../common/constants/auth.constants';
 
 export class UserResponseDto {
@@ -102,6 +103,7 @@ export class RefreshTokenDto {
     example: 'eyJhbGc...',
     description: 'Refresh token',
   })
+  @IsString()
   refresh_token: string;
 }
 

@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
-import '../../domain/entities/user.dart';
+import '../../data/models/user_model.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
@@ -28,10 +28,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         passwordConfirm: event.passwordConfirm,
       );
 
-      // Save tokens
       await remoteDataSource.apiClient.saveTokens(
         result.accessToken,
         result.refreshToken,
+      );
+      await remoteDataSource.apiClient.saveUserData(
+        result.user.toJson(),
       );
 
       emit(AuthAuthenticated(user: result.user));
@@ -52,10 +54,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         password: event.password,
       );
 
-      // Save tokens
       await remoteDataSource.apiClient.saveTokens(
         result.accessToken,
         result.refreshToken,
+      );
+      await remoteDataSource.apiClient.saveUserData(
+        result.user.toJson(),
       );
 
       emit(AuthAuthenticated(user: result.user));
@@ -82,25 +86,30 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthCheckStatusEvent event,
     Emitter<AuthState> emit,
   ) async {
-    final isAuthenticated = remoteDataSource.apiClient.isAuthenticated();
-
-    if (isAuthenticated) {
-      // In a real app, you'd verify the token with the server
-      emit(AuthAuthenticated(
-        user: User(
-          id: '',
-          username: '',
-          email: '',
-          privacyMode: 'PUBLIC',
-          explorationPercent: 0,
-          totalXp: 0,
-          medalsCount: 0,
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ),
-      ));
-    } else {
+    if (!remoteDataSource.apiClient.isAuthenticated()) {
       emit(const AuthUnauthenticated());
+      return;
+    }
+
+    final userData = remoteDataSource.apiClient.getUserData();
+    if (userData == null) {
+      emit(const AuthUnauthenticated());
+      return;
+    }
+
+    // Restore session immediately from local storage (no network needed)
+    emit(AuthAuthenticated(user: UserModel.fromJson(userData)));
+
+    // Validate token with server; only log out if both tokens are truly expired.
+    // Network errors keep the session alive (offline-first).
+    try {
+      final valid = await remoteDataSource.verifyToken();
+      if (!valid) {
+        await remoteDataSource.apiClient.logout();
+        emit(const AuthUnauthenticated());
+      }
+    } catch (_) {
+      // Network error — keep session alive
     }
   }
 }

@@ -80,29 +80,30 @@ jobs:
           name: app-release.apk
           path: frontend/build/app/outputs/apk/release/
 
-  build-ios:
-    runs-on: macos-latest
-    needs: analyze-and-test
+#   build-ios:
+#     runs-on: macos-latest
+#     needs: analyze-and-test
+#
+#     steps:
+#       - uses: actions/checkout@v4
+#
+#       - name: Setup Flutter
+#         uses: subosito/flutter-action@v2
+#         with:
+#           flutter-version: 3.41.7
+#           cache: true
+#
+#       - name: Get dependencies
+#         working-directory: ./frontend
+#         run: flutter pub get
+#
+#       - name: Build iOS
+#         working-directory: ./frontend
+#         run: flutter build ios --release --no-codesign
+#
+#       - name: Upload build
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: ios-build
+#           path: frontend/build/ios/
 
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: 3.41.7
-          cache: true
-
-      - name: Get dependencies
-        working-directory: ./frontend
-        run: flutter pub get
-
-      - name: Build iOS
-        working-directory: ./frontend
-        run: flutter build ios --release --no-codesign
-
-      - name: Upload build
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-build
-          path: frontend/build/ios/

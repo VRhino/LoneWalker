@@ -22,10 +22,7 @@ import {
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>(JWT_SECRET_KEY),
         signOptions: {
-          expiresIn: configService.get<number>(
-            JWT_EXPIRATION_KEY,
-            JWT_DEFAULT_EXPIRATION_S,
-          ),
+          expiresIn: Number(configService.get(JWT_EXPIRATION_KEY, JWT_DEFAULT_EXPIRATION_S)),
           algorithm: JWT_ALGORITHM,
         },
       }),

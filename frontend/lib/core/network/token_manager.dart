@@ -10,6 +10,10 @@ abstract class TokenManager {
   Future<void> saveAccessToken(String token);
   Future<void> clearTokens();
 
+  Future<void> saveUserData(Map<String, dynamic> json);
+  Map<String, dynamic>? getUserData();
+  Future<void> clearUserData();
+
   factory TokenManager() = _GetStorageTokenManager;
 }
 
@@ -40,5 +44,23 @@ class _GetStorageTokenManager implements TokenManager {
   Future<void> clearTokens() async {
     await _storage.remove(StorageKeys.accessToken);
     await _storage.remove(StorageKeys.refreshToken);
+    await clearUserData();
+  }
+
+  @override
+  Future<void> saveUserData(Map<String, dynamic> json) async {
+    await _storage.write(StorageKeys.userData, json);
+  }
+
+  @override
+  Map<String, dynamic>? getUserData() {
+    final raw = _storage.read(StorageKeys.userData);
+    if (raw == null) return null;
+    return Map<String, dynamic>.from(raw as Map);
+  }
+
+  @override
+  Future<void> clearUserData() async {
+    await _storage.remove(StorageKeys.userData);
   }
 }

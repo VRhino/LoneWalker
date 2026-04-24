@@ -12,7 +12,7 @@ import { SRID_WGS84 } from '../../../common/constants/geo.constants';
 
 @Entity('exploration')
 @Index('idx_exploration_user_id', ['user_id'])
-@Index('idx_exploration_created', ['created_at'])
+@Index('idx_exploration_created', ['explored_at'])
 export class ExplorationEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;

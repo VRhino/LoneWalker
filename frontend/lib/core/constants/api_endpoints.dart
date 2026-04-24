@@ -4,6 +4,7 @@ class ApiEndpoints {
   static const String authLogin = '/auth/login';
   static const String authLogout = '/auth/logout';
   static const String authRefresh = '/auth/refresh';
+  static const String authVerify = '/auth/verify';
 
   // Exploration
   static const String explorationRegister = '/exploration';

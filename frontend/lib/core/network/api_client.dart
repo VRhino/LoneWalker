@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../../config/app_config.dart';
 import '../constants/api_endpoints.dart';
 import '../constants/storage_keys.dart';
@@ -23,46 +24,64 @@ class ApiClient {
       InterceptorsWrapper(
         onRequest: (options, handler) {
           final token = _tokenManager.accessToken;
+          debugPrint('[ApiClient] → ${options.method} ${options.path} | token=${token != null ? "present" : "NULL (not authenticated)"}');
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';
           }
           handler.next(options);
         },
         onError: (error, handler) async {
-          if (error.response?.statusCode == 401) {
+          final isRefreshRequest =
+              error.requestOptions.path.contains(ApiEndpoints.authRefresh);
+
+          if (error.response?.statusCode == 401 && !isRefreshRequest) {
             try {
               final refreshToken = _tokenManager.refreshToken;
               if (refreshToken != null) {
-                final response = await _dio.post(
+                final refreshResponse = await _dio.post(
                   ApiEndpoints.authRefresh,
                   data: {StorageKeys.refreshToken: refreshToken},
                 );
 
                 final newToken =
-                    response.data[ApiResponseKeys.accessToken] as String;
+                    refreshResponse.data[ApiResponseKeys.accessToken] as String;
                 await _tokenManager.saveAccessToken(newToken);
 
-                final requestOptions = error.requestOptions;
-                requestOptions.headers['Authorization'] = 'Bearer $newToken';
-                final retryOptions = Options(
-                  method: requestOptions.method,
-                  headers: requestOptions.headers,
-                  contentType: requestOptions.contentType,
-                  responseType: requestOptions.responseType,
-                );
+                final orig = error.requestOptions;
                 return handler.resolve(
-                  await _dio.request(requestOptions.path,
-                      options: retryOptions),
+                  await _dio.request(
+                    orig.path,
+                    data: orig.data,
+                    queryParameters: orig.queryParameters,
+                    options: Options(
+                      method: orig.method,
+                      headers: {
+                        ...orig.headers,
+                        'Authorization': 'Bearer $newToken',
+                      },
+                      contentType: orig.contentType,
+                      responseType: orig.responseType,
+                    ),
+                  ),
                 );
               }
-            } catch (_) {
-              await _tokenManager.clearTokens();
+            } catch (e) {
+              debugPrint('[ApiClient] Token refresh failed: $e');
             }
           }
           handler.next(error);
         },
       ),
     );
+
+    if (kDebugMode) {
+      _dio.interceptors.add(LogInterceptor(
+        requestBody: true,
+        responseBody: true,
+        requestHeader: true,
+        logPrint: (o) => debugPrint('[Dio] $o'),
+      ));
+    }
   }
 
   Future<Response> get(
@@ -124,4 +143,11 @@ class ApiClient {
   Future<void> logout() => _tokenManager.clearTokens();
 
   bool isAuthenticated() => _tokenManager.isAuthenticated;
+
+  Future<void> saveUserData(Map<String, dynamic> json) =>
+      _tokenManager.saveUserData(json);
+
+  Map<String, dynamic>? getUserData() => _tokenManager.getUserData();
+
+  Future<void> clearUserData() => _tokenManager.clearUserData();
 }

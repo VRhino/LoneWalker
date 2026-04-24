@@ -36,10 +36,7 @@ export class TokenService {
       { [JWT_SUBJECT_CLAIM]: userId },
       {
         secret: this.configService.get<string>(JWT_SECRET_KEY),
-        expiresIn: this.configService.get<number>(
-          JWT_EXPIRATION_KEY,
-          JWT_DEFAULT_EXPIRATION_S,
-        ),
+        expiresIn: Number(this.configService.get(JWT_EXPIRATION_KEY, JWT_DEFAULT_EXPIRATION_S)),
         algorithm: JWT_ALGORITHM,
       },
     );
@@ -50,10 +47,7 @@ export class TokenService {
       { [JWT_SUBJECT_CLAIM]: userId, [JWT_TYPE_CLAIM]: REFRESH_TOKEN_TYPE },
       {
         secret: this.configService.get<string>(JWT_SECRET_KEY),
-        expiresIn: this.configService.get<number>(
-          REFRESH_TOKEN_EXPIRATION_KEY,
-          REFRESH_TOKEN_DEFAULT_EXPIRATION_S,
-        ),
+        expiresIn: Number(this.configService.get(REFRESH_TOKEN_EXPIRATION_KEY, REFRESH_TOKEN_DEFAULT_EXPIRATION_S)),
         algorithm: JWT_ALGORITHM,
       },
     );

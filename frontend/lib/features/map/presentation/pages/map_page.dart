@@ -75,8 +75,9 @@ class _MapPageState extends State<MapPage> {
         child: Stack(
           children: [
             // Google Maps
-            BlocBuilder<MapBloc, MapState>(
-              builder: (context, state) {
+            Positioned.fill(
+              child: BlocBuilder<MapBloc, MapState>(
+                builder: (context, state) {
                 if (state is MapInitial || state is MapLoading) {
                   return const Center(
                     child: CircularProgressIndicator(),
@@ -135,6 +136,7 @@ class _MapPageState extends State<MapPage> {
 
                 return const SizedBox.shrink();
               },
+            ),
             ),
 
             // Exploration Stats Card

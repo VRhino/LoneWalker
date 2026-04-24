@@ -9,9 +9,9 @@ class MapLocationModel extends MapLocation {
 
   factory MapLocationModel.fromJson(Map<String, dynamic> json) {
     return MapLocationModel(
-      latitude: (json['latitude'] as num).toDouble(),
-      longitude: (json['longitude'] as num).toDouble(),
-      accuracy: (json['accuracy_meters'] as num?)?.toDouble() ?? 10.0,
+      latitude: double.tryParse(json['latitude']?.toString() ?? '') ?? 0.0,
+      longitude: double.tryParse(json['longitude']?.toString() ?? '') ?? 0.0,
+      accuracy: double.tryParse(json['accuracy_meters']?.toString() ?? '') ?? 10.0,
     );
   }
 
@@ -33,10 +33,10 @@ class ExplorationStatsModel extends ExplorationStats {
 
   factory ExplorationStatsModel.fromJson(Map<String, dynamic> json) {
     return ExplorationStatsModel(
-      explorationPercent: (json['exploration_percent'] as num).toDouble(),
-      totalXp: json['total_xp'] as int,
-      newAreasCleared: (json['new_areas_cleared'] as num).toDouble(),
-      xpEarned: json['xp_earned'] as int,
+      explorationPercent: double.tryParse(json['exploration_percent']?.toString() ?? '') ?? 0.0,
+      totalXp: json['total_xp'] as int? ?? 0,
+      newAreasCleared: double.tryParse(json['new_areas_cleared']?.toString() ?? '') ?? 0.0,
+      xpEarned: json['xp_earned'] as int? ?? 0,
       districts: (json['districts_explored'] as List<dynamic>)
           .map((d) => DistrictExplorationModel.fromJson(d))
           .toList(),
@@ -71,7 +71,7 @@ class DistrictExplorationModel extends DistrictExploration {
     return DistrictExplorationModel(
       districtId: json['district_id'] as String,
       name: json['name'] as String,
-      explorationPercent: (json['exploration_percent'] as num).toDouble(),
+      explorationPercent: double.tryParse(json['exploration_percent']?.toString() ?? '') ?? 0.0,
       masteryLevel: json['mastery_level'] as String,
     );
   }
