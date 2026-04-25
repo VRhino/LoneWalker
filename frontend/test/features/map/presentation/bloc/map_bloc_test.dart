@@ -165,6 +165,7 @@ void main() {
           ),
           explorationStats: testStats,
           mapData: {},
+          exploredAreas: [],
         ),
         act: (b) => b.add(const LoadProgressEvent()),
         expect: () => [

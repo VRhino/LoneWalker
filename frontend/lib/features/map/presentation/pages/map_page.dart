@@ -3,9 +3,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../../config/app_config.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../domain/entities/map_state.dart';
 import '../bloc/map_bloc.dart';
 import '../bloc/map_event.dart';
 import '../bloc/map_state.dart';
+import '../widgets/fog_of_war_widget.dart';
+
+class _CameraNotifier extends ChangeNotifier {
+  void notify() => notifyListeners();
+}
 
 class MapPage extends StatefulWidget {
   const MapPage({super.key});
@@ -17,6 +23,7 @@ class MapPage extends StatefulWidget {
 class _MapPageState extends State<MapPage> {
   GoogleMapController? mapController;
   double currentZoom = AppConfig.mapDefaultZoom;
+  final _cameraNotifier = _CameraNotifier();
 
   @override
   void initState() {
@@ -26,7 +33,9 @@ class _MapPageState extends State<MapPage> {
   }
 
   void _onMapCreated(GoogleMapController controller) {
-    mapController = controller;
+    setState(() {
+      mapController = controller;
+    });
   }
 
   @override
@@ -78,65 +87,102 @@ class _MapPageState extends State<MapPage> {
             Positioned.fill(
               child: BlocBuilder<MapBloc, MapState>(
                 builder: (context, state) {
-                if (state is MapInitial || state is MapLoading) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                }
+                  if (state is MapInitial || state is MapLoading) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
 
-                if (state is MapLoaded ||
-                    state is ExplorationRegistered ||
-                    state is LocationUpdated) {
-                  final userLat = (state is MapLoaded)
-                      ? state.userLocation.latitude
-                      : (state is LocationUpdated)
-                          ? state.location.latitude
-                          : AppConfig.defaultLatitude;
+                  if (state is MapLoaded ||
+                      state is ExplorationRegistered ||
+                      state is LocationUpdated) {
+                    final userLat = (state is MapLoaded)
+                        ? state.userLocation.latitude
+                        : (state is LocationUpdated)
+                            ? state.location.latitude
+                            : AppConfig.defaultLatitude;
 
-                  final userLng = (state is MapLoaded)
-                      ? state.userLocation.longitude
-                      : (state is LocationUpdated)
-                          ? state.location.longitude
-                          : AppConfig.defaultLongitude;
+                    final userLng = (state is MapLoaded)
+                        ? state.userLocation.longitude
+                        : (state is LocationUpdated)
+                            ? state.location.longitude
+                            : AppConfig.defaultLongitude;
 
-                  return GoogleMap(
-                    onMapCreated: _onMapCreated,
-                    initialCameraPosition: CameraPosition(
-                      target: LatLng(userLat, userLng),
-                      zoom: currentZoom,
-                    ),
-                    onCameraMove: (CameraPosition position) {
-                      currentZoom = position.zoom;
-                    },
-                    myLocationEnabled: true,
-                    myLocationButtonEnabled: true,
-                    zoomControlsEnabled: false,
-                  );
-                }
+                    return GoogleMap(
+                      onMapCreated: _onMapCreated,
+                      initialCameraPosition: CameraPosition(
+                        target: LatLng(userLat, userLng),
+                        zoom: currentZoom,
+                      ),
+                      onCameraMove: (CameraPosition position) {
+                        currentZoom = position.zoom;
+                        _cameraNotifier.notify();
+                      },
+                      myLocationEnabled: true,
+                      myLocationButtonEnabled: true,
+                      zoomControlsEnabled: false,
+                    );
+                  }
 
-                if (state is MapError) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.error_outline, size: 64),
-                        const SizedBox(height: 16),
-                        Text(state.message),
-                        const SizedBox(height: 24),
-                        ElevatedButton(
-                          onPressed: () {
-                            context.read<MapBloc>().add(const InitMapEvent());
-                          },
-                          child: const Text('Retry'),
-                        ),
-                      ],
-                    ),
-                  );
-                }
+                  if (state is MapError) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.error_outline, size: 64),
+                          const SizedBox(height: 16),
+                          Text(state.message),
+                          const SizedBox(height: 24),
+                          ElevatedButton(
+                            onPressed: () {
+                              context.read<MapBloc>().add(const InitMapEvent());
+                            },
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
 
-                return const SizedBox.shrink();
-              },
+                  return const SizedBox.shrink();
+                },
+              ),
             ),
+
+            // Fog of War overlay
+            Positioned.fill(
+              child: BlocBuilder<MapBloc, MapState>(
+                buildWhen: (prev, curr) =>
+                    curr is MapLoaded ||
+                    curr is ExplorationRegistered ||
+                    curr is LocationUpdated,
+                builder: (context, state) {
+                  MapLocation? loc;
+                  List<ExploredArea> areas = const [];
+
+                  if (state is MapLoaded) {
+                    loc = state.userLocation;
+                    areas = state.exploredAreas;
+                  } else if (state is ExplorationRegistered) {
+                    loc = state.userLocation;
+                    areas = state.exploredAreas;
+                  } else if (state is LocationUpdated) {
+                    loc = state.location;
+                  }
+
+                  if (loc == null || mapController == null) {
+                    return const SizedBox.shrink();
+                  }
+
+                  return FogOfWarWidget(
+                    userLocation: loc,
+                    exploredAreas: areas,
+                    mapZoom: currentZoom,
+                    mapController: mapController,
+                    cameraNotifier: _cameraNotifier,
+                  );
+                },
+              ),
             ),
 
             // Exploration Stats Card
@@ -261,6 +307,7 @@ class _MapPageState extends State<MapPage> {
 
   @override
   void dispose() {
+    _cameraNotifier.dispose();
     mapController?.dispose();
     super.dispose();
   }

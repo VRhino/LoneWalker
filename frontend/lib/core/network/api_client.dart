@@ -24,7 +24,8 @@ class ApiClient {
       InterceptorsWrapper(
         onRequest: (options, handler) {
           final token = _tokenManager.accessToken;
-          debugPrint('[ApiClient] → ${options.method} ${options.path} | token=${token != null ? "present" : "NULL (not authenticated)"}');
+          debugPrint(
+              '[ApiClient] → ${options.method} ${options.path} | token=${token != null ? "present" : "NULL (not authenticated)"}');
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';
           }

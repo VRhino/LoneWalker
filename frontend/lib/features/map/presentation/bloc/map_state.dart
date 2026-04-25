@@ -20,30 +20,38 @@ class MapLoaded extends MapState {
   final MapLocation userLocation;
   final ExplorationStats explorationStats;
   final Map<String, dynamic> mapData;
+  final List<ExploredArea> exploredAreas;
 
   const MapLoaded({
     required this.userLocation,
     required this.explorationStats,
     required this.mapData,
+    required this.exploredAreas,
   });
 
   @override
-  List<Object?> get props => [userLocation, explorationStats, mapData];
+  List<Object?> get props =>
+      [userLocation, explorationStats, mapData, exploredAreas];
 }
 
 class ExplorationRegistered extends MapState {
   final ExplorationStats stats;
   final int xpEarned;
   final double newAreasCleared;
+  final MapLocation userLocation;
+  final List<ExploredArea> exploredAreas;
 
   const ExplorationRegistered({
     required this.stats,
     required this.xpEarned,
     required this.newAreasCleared,
+    required this.userLocation,
+    required this.exploredAreas,
   });
 
   @override
-  List<Object?> get props => [stats, xpEarned, newAreasCleared];
+  List<Object?> get props =>
+      [stats, xpEarned, newAreasCleared, userLocation, exploredAreas];
 }
 
 class LocationUpdated extends MapState {

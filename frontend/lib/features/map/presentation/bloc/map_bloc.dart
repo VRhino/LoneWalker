@@ -3,6 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import '../../../../config/app_config.dart';
 import '../../data/datasources/map_remote_datasource.dart';
 import '../../data/models/map_models.dart';
+import '../../domain/entities/map_state.dart';
 import 'map_event.dart';
 import 'map_state.dart';
 
@@ -15,6 +16,20 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     on<LoadFogEvent>(_onLoadFog);
     on<LoadProgressEvent>(_onLoadProgress);
     on<RefreshMapEvent>(_onRefreshMap);
+  }
+
+  List<ExploredArea> _parseExploredAreas(Map<String, dynamic> mapData) {
+    final raw = mapData['explored_areas'] as List<dynamic>? ?? [];
+    return raw
+        .whereType<Map<String, dynamic>>()
+        .map((e) => ExploredArea(
+              latitude: (e['latitude'] as num).toDouble(),
+              longitude: (e['longitude'] as num).toDouble(),
+              exploredAt:
+                  DateTime.tryParse(e['explored_at']?.toString() ?? '') ??
+                      DateTime.now(),
+            ))
+        .toList();
   }
 
   Future<void> _onInitMap(
@@ -61,6 +76,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         userLocation: userLocation,
         explorationStats: stats,
         mapData: mapData,
+        exploredAreas: _parseExploredAreas(mapData),
       ));
     } catch (e) {
       emit(MapError(message: e.toString().replaceFirst('Exception: ', '')));
@@ -98,10 +114,21 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         speed: event.speed,
       );
 
+      final prevAreas = (state is MapLoaded)
+          ? (state as MapLoaded).exploredAreas
+          : <ExploredArea>[];
+      final userLocation = MapLocationModel(
+        latitude: event.latitude,
+        longitude: event.longitude,
+        accuracy: event.accuracy,
+      );
+
       emit(ExplorationRegistered(
         stats: stats,
         xpEarned: stats.xpEarned,
         newAreasCleared: stats.newAreasCleared,
+        userLocation: userLocation,
+        exploredAreas: prevAreas,
       ));
     } catch (e) {
       emit(MapError(message: e.toString().replaceFirst('Exception: ', '')));
@@ -131,6 +158,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         userLocation: userLocation,
         explorationStats: stats,
         mapData: mapData,
+        exploredAreas: _parseExploredAreas(mapData),
       ));
     } catch (e) {
       emit(MapError(message: e.toString().replaceFirst('Exception: ', '')));
@@ -150,6 +178,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
           userLocation: mapLoaded.userLocation,
           explorationStats: stats,
           mapData: mapLoaded.mapData,
+          exploredAreas: mapLoaded.exploredAreas,
         ));
       }
     } catch (e) {
@@ -184,6 +213,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         userLocation: userLocation,
         explorationStats: stats,
         mapData: mapData,
+        exploredAreas: _parseExploredAreas(mapData),
       ));
     } catch (e) {
       emit(MapError(message: e.toString().replaceFirst('Exception: ', '')));

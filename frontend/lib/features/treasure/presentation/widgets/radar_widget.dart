@@ -10,7 +10,7 @@ class RadarWidget extends StatefulWidget {
   final List<RadarTreasureModel> treasures;
   final double userLatitude;
   final double userLongitude;
-  final VoidCallback? onTreasureTap;
+  final void Function(RadarTreasureModel)? onTreasureTap;
 
   const RadarWidget({
     super.key,
@@ -94,7 +94,9 @@ class _RadarWidgetState extends State<RadarWidget> {
             left: radarRadius + x - AppDimensions.radarMarkerOffset,
             top: radarRadius + y - AppDimensions.radarMarkerOffset,
             child: GestureDetector(
-              onTap: widget.onTreasureTap,
+              onTap: widget.onTreasureTap != null
+                  ? () => widget.onTreasureTap!(treasure)
+                  : null,
               child: Container(
                 width: AppDimensions.radarMarkerSize,
                 height: AppDimensions.radarMarkerSize,

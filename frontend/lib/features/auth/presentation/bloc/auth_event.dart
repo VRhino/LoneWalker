@@ -44,7 +44,3 @@ class AuthLogoutEvent extends AuthEvent {
 class AuthCheckStatusEvent extends AuthEvent {
   const AuthCheckStatusEvent();
 }
-
-class AuthRefreshTokenEvent extends AuthEvent {
-  const AuthRefreshTokenEvent();
-}

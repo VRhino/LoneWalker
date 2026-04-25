@@ -20,6 +20,7 @@ class TreasurePage extends StatefulWidget {
 
 class _TreasurePageState extends State<TreasurePage> {
   StreamSubscription<Position>? _positionSubscription;
+  Position? _lastPosition;
 
   @override
   void initState() {
@@ -35,6 +36,7 @@ class _TreasurePageState extends State<TreasurePage> {
       ),
     ).listen((position) {
       if (!mounted) return;
+      setState(() => _lastPosition = position);
       context.read<TreasureBloc>().add(
             ActivateRadarEvent(
               latitude: position.latitude,
@@ -99,6 +101,10 @@ class _TreasurePageState extends State<TreasurePage> {
               return _buildClaimSuccessView(context, state);
             }
 
+            if (state is GPSValidationInProgress) {
+              return _buildGPSValidationView(context, state);
+            }
+
             if (state is TreasureError) {
               return _buildErrorView(context, state);
             }
@@ -145,6 +151,12 @@ class _TreasurePageState extends State<TreasurePage> {
                   treasures: state.treasures,
                   userLatitude: state.userLatitude,
                   userLongitude: state.userLongitude,
+                  onTreasureTap: (treasure) {
+                    context.read<TreasureBloc>().add(
+                          LoadTreasureDetailsEvent(
+                              treasureId: treasure.treasureId),
+                        );
+                  },
                 ),
               ],
             ),
@@ -172,6 +184,16 @@ class _TreasurePageState extends State<TreasurePage> {
         return Card(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: ListTile(
+            onTap: treasure.canClaim && _lastPosition != null
+                ? () {
+                    context.read<TreasureBloc>().add(ClaimTreasureEvent(
+                          treasureId: treasure.treasureId,
+                          latitude: _lastPosition!.latitude,
+                          longitude: _lastPosition!.longitude,
+                          accuracyMeters: _lastPosition!.accuracy,
+                        ));
+                  }
+                : null,
             leading: Container(
               width: 12,
               height: 12,
@@ -349,9 +371,11 @@ class _TreasurePageState extends State<TreasurePage> {
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: () {
-              context.read<TreasureBloc>().add(const ActivateRadarEvent(
-                    latitude: AppConfig.defaultLatitude,
-                    longitude: AppConfig.defaultLongitude,
+              context.read<TreasureBloc>().add(ActivateRadarEvent(
+                    latitude:
+                        _lastPosition?.latitude ?? AppConfig.defaultLatitude,
+                    longitude:
+                        _lastPosition?.longitude ?? AppConfig.defaultLongitude,
                   ));
             },
             child: const Text('Back to Radar'),
@@ -372,13 +396,34 @@ class _TreasurePageState extends State<TreasurePage> {
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: () {
-              context.read<TreasureBloc>().add(const ActivateRadarEvent(
-                    latitude: AppConfig.defaultLatitude,
-                    longitude: AppConfig.defaultLongitude,
+              context.read<TreasureBloc>().add(ActivateRadarEvent(
+                    latitude:
+                        _lastPosition?.latitude ?? AppConfig.defaultLatitude,
+                    longitude:
+                        _lastPosition?.longitude ?? AppConfig.defaultLongitude,
                   ));
             },
             child: const Text('Retry'),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGPSValidationView(
+      BuildContext context, GPSValidationInProgress state) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const CircularProgressIndicator(),
+          const SizedBox(height: 24),
+          Text(
+            'Validating GPS...',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 8),
+          const Text('Hold still near the treasure'),
         ],
       ),
     );

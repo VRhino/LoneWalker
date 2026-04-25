@@ -84,7 +84,8 @@ class MapRemoteDataSource {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
-        return Exception('Cannot reach server at $url — check backend is running and API_BASE_URL is correct');
+        return Exception(
+            'Cannot reach server at $url — check backend is running and API_BASE_URL is correct');
       default:
         break;
     }
@@ -92,13 +93,12 @@ class MapRemoteDataSource {
     switch (status) {
       case 400:
         final rawMsg = body is Map ? body['message'] : null;
-        final msg = rawMsg is List
-            ? rawMsg.join(', ')
-            : rawMsg as String?;
+        final msg = rawMsg is List ? rawMsg.join(', ') : rawMsg as String?;
         return Exception('[400] ${msg ?? 'Invalid exploration data'} ($url)');
       case 401:
         final serverMsg = body is Map ? body['message'] : null;
-        return Exception('[401] ${serverMsg ?? 'Unauthorized'} — token may be missing or expired ($url)');
+        return Exception(
+            '[401] ${serverMsg ?? 'Unauthorized'} — token may be missing or expired ($url)');
       case 403:
         return Exception('[403] Forbidden ($url)');
       case 404:
@@ -106,7 +106,8 @@ class MapRemoteDataSource {
       case 500:
         return Exception('[500] Internal server error ($url)');
       default:
-        return Exception('[${status ?? 'ERR'}] ${e.message ?? 'Unknown error'} ($url)');
+        return Exception(
+            '[${status ?? 'ERR'}] ${e.message ?? 'Unknown error'} ($url)');
     }
   }
 }

@@ -1,168 +1,180 @@
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../../config/app_config.dart';
-import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/map_state.dart';
 
-/// Fog of War Widget
-/// Paints explored areas on a canvas overlay
-class FogOfWarWidget extends StatelessWidget {
+class FogOfWarWidget extends StatefulWidget {
   final MapLocation userLocation;
-  final List<dynamic> exploredAreas;
+  final List<ExploredArea> exploredAreas;
   final double mapZoom;
-  final Size canvasSize;
+  final GoogleMapController? mapController;
+  final ChangeNotifier cameraNotifier;
 
   const FogOfWarWidget({
     super.key,
     required this.userLocation,
     required this.exploredAreas,
     required this.mapZoom,
-    required this.canvasSize,
+    required this.mapController,
+    required this.cameraNotifier,
   });
 
   @override
+  State<FogOfWarWidget> createState() => _FogOfWarWidgetState();
+}
+
+class _FogOfWarWidgetState extends State<FogOfWarWidget> {
+  List<Offset?> _exploredOffsets = [];
+  Offset? _userOffset;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.cameraNotifier.addListener(_computeOffsets);
+    _computeOffsets();
+  }
+
+  @override
+  void didUpdateWidget(FogOfWarWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.cameraNotifier != widget.cameraNotifier) {
+      oldWidget.cameraNotifier.removeListener(_computeOffsets);
+      widget.cameraNotifier.addListener(_computeOffsets);
+    }
+    if (oldWidget.mapController != widget.mapController ||
+        oldWidget.exploredAreas != widget.exploredAreas ||
+        oldWidget.userLocation != widget.userLocation ||
+        oldWidget.mapZoom != widget.mapZoom) {
+      _computeOffsets();
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.cameraNotifier.removeListener(_computeOffsets);
+    super.dispose();
+  }
+
+  Future<void> _computeOffsets() async {
+    final ctrl = widget.mapController;
+    if (ctrl == null || !mounted) return;
+
+    final ratio = MediaQuery.of(context).devicePixelRatio;
+    final offsets = <Offset?>[];
+
+    for (final area in widget.exploredAreas) {
+      try {
+        final sc = await ctrl.getScreenCoordinate(
+          LatLng(area.latitude, area.longitude),
+        );
+        offsets.add(Offset(sc.x / ratio, sc.y / ratio));
+      } catch (_) {
+        offsets.add(null);
+      }
+    }
+
+    Offset? userOff;
+    try {
+      final sc = await ctrl.getScreenCoordinate(
+        LatLng(widget.userLocation.latitude, widget.userLocation.longitude),
+      );
+      userOff = Offset(sc.x / ratio, sc.y / ratio);
+    } catch (_) {}
+
+    if (mounted) {
+      setState(() {
+        _exploredOffsets = offsets;
+        _userOffset = userOff;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: FogOfWarPainter(
-        userLocation: userLocation,
-        exploredAreas: exploredAreas,
-        mapZoom: mapZoom,
+    return IgnorePointer(
+      child: CustomPaint(
+        painter: FogOfWarPainter(
+          exploredOffsets: _exploredOffsets,
+          userOffset: _userOffset,
+          fogRadius: AppConfig.fogOfWarRadius * (widget.mapZoom / 15.0),
+        ),
+        size: Size.infinite,
       ),
-      size: canvasSize,
     );
   }
 }
 
-/// Custom painter for fog of war
 class FogOfWarPainter extends CustomPainter {
-  final MapLocation userLocation;
-  final List<dynamic> exploredAreas;
-  final double mapZoom;
+  final List<Offset?> exploredOffsets;
+  final Offset? userOffset;
+  final double fogRadius;
 
   FogOfWarPainter({
-    required this.userLocation,
-    required this.exploredAreas,
-    required this.mapZoom,
+    required this.exploredOffsets,
+    required this.userOffset,
+    required this.fogRadius,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Paint fog of war (dark overlay)
-    _paintFogOfWar(canvas, size);
+    canvas.saveLayer(Rect.fromLTWH(0, 0, size.width, size.height), Paint());
 
-    // Paint explored areas (cleared)
-    _paintExploredAreas(canvas, size);
-
-    // Paint user location marker
-    _paintUserMarker(canvas, size);
-  }
-
-  void _paintFogOfWar(Canvas canvas, Size size) {
-    final fogPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.6)
-      ..style = PaintingStyle.fill;
-
-    // Cover entire canvas with fog
     canvas.drawRect(
       Rect.fromLTWH(0, 0, size.width, size.height),
-      fogPaint,
+      Paint()..color = Colors.black.withValues(alpha: 0.6),
     );
-  }
 
-  void _paintExploredAreas(Canvas canvas, Size size) {
-    final gradientPaint = Paint()
-      ..shader = RadialGradient(
-        colors: [
-          Colors.transparent,
-          Colors.black.withValues(alpha: 0.4),
-          Colors.black.withValues(alpha: 0.6),
-        ],
-        stops: const [0.0, 0.7, 1.0],
-      ).createShader(
-        Rect.fromCircle(
-          center: const Offset(0, 0),
-          radius: AppConfig.fogOfWarRadius * mapZoom,
-        ),
-      );
-
-    // Draw cleared areas (circles around explored points)
-    for (final area in exploredAreas) {
-      if (area is Map) {
-        final lat = area['latitude'] as double?;
-        final lng = area['longitude'] as double?;
-
-        if (lat != null && lng != null) {
-          final offset = _latLngToOffset(lat, lng, size);
-          if (offset != null) {
-            // Clear fog with gradient effect
-            canvas.drawCircle(
-              offset,
-              AppConfig.fogOfWarRadius * mapZoom,
-              gradientPaint,
-            );
-          }
-        }
+    final clearPaint = Paint()..blendMode = BlendMode.dstOut;
+    for (final offset in exploredOffsets) {
+      if (offset != null) {
+        canvas.drawCircle(offset, fogRadius, clearPaint);
       }
     }
+
+    if (userOffset != null) {
+      canvas.drawCircle(userOffset!, fogRadius, clearPaint);
+    }
+
+    canvas.restore();
+
+    _paintUserMarker(canvas);
   }
 
-  void _paintUserMarker(Canvas canvas, Size size) {
-    final offset = _latLngToOffset(
-      userLocation.latitude,
-      userLocation.longitude,
-      size,
+  void _paintUserMarker(Canvas canvas) {
+    final offset = userOffset;
+    if (offset == null) return;
+
+    canvas.drawCircle(
+      offset,
+      12,
+      Paint()
+        ..color = AppTheme.primaryColor.withValues(alpha: 0.3)
+        ..style = PaintingStyle.fill,
     );
 
-    if (offset != null) {
-      // Outer circle (light)
-      canvas.drawCircle(
-        offset,
-        12 * mapZoom,
-        Paint()
-          ..color = AppTheme.primaryColor.withValues(alpha: 0.3)
-          ..style = PaintingStyle.fill,
-      );
+    canvas.drawCircle(
+      offset,
+      8,
+      Paint()
+        ..color = AppTheme.primaryColor
+        ..style = PaintingStyle.fill,
+    );
 
-      // Inner circle (solid)
-      canvas.drawCircle(
-        offset,
-        8 * mapZoom,
-        Paint()
-          ..color = AppTheme.primaryColor
-          ..style = PaintingStyle.fill,
-      );
-
-      // Pulse animation effect (border)
-      canvas.drawCircle(
-        offset,
-        10 * mapZoom,
-        Paint()
-          ..color = AppTheme.primaryColor
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2,
-      );
-    }
-  }
-
-  /// Convert lat/lng to canvas offset (simplified)
-  Offset? _latLngToOffset(double lat, double lng, Size size) {
-    // This is simplified - in production, use proper map projection
-    // For now, return center if coordinates match user location (approximately)
-    final latDiff = (lat - userLocation.latitude).abs();
-    final lngDiff = (lng - userLocation.longitude).abs();
-
-    if (latDiff < AppDimensions.latLngMatchThreshold &&
-        lngDiff < AppDimensions.latLngMatchThreshold) {
-      return Offset(size.width / 2, size.height / 2);
-    }
-
-    return null;
+    canvas.drawCircle(
+      offset,
+      10,
+      Paint()
+        ..color = AppTheme.primaryColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2,
+    );
   }
 
   @override
   bool shouldRepaint(FogOfWarPainter oldDelegate) {
-    return oldDelegate.userLocation != userLocation ||
-        oldDelegate.exploredAreas != exploredAreas ||
-        oldDelegate.mapZoom != mapZoom;
+    return oldDelegate.exploredOffsets != exploredOffsets ||
+        oldDelegate.userOffset != userOffset ||
+        oldDelegate.fogRadius != fogRadius;
   }
 }
