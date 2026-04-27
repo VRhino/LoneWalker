@@ -24,6 +24,8 @@ import {
 } from '../../common/constants/geo.constants';
 import { GeoUtils } from '../../common/utils/geo.utils';
 import { ERROR_MESSAGES } from '../../common/constants/error-messages.constants';
+import { UsersService } from '../users/users.service';
+import { MedalsService } from '../medals/medals.service';
 
 const TREASURE_ACTIVATION_RADIUS_M = 100;
 const TREASURE_CLAIM_RADIUS_M = 10;
@@ -49,6 +51,8 @@ export class TreasuresService {
     private treasureRepository: Repository<TreasureEntity>,
     @InjectRepository(TreasureClaimEntity)
     private claimRepository: Repository<TreasureClaimEntity>,
+    private usersService: UsersService,
+    private medalsService: MedalsService,
   ) {}
 
   async createTreasure(
@@ -222,6 +226,9 @@ export class TreasuresService {
       treasure.status = TreasureStatus.DEPLETED;
     }
     await this.treasureRepository.save(treasure);
+
+    await this.usersService.addXp(userId, xpEarned);
+    await this.medalsService.checkAndAwardMedals(userId);
 
     return {
       treasure: this.mapToDtoSync(treasure, true),

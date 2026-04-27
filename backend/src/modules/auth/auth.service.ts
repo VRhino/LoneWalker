@@ -103,6 +103,7 @@ export class AuthService {
         exploration_percent: user.exploration_percent,
         total_xp: user.total_xp,
         medals_count: user.medals_count,
+        cartographer_points: user.cartographer_points,
         created_at: user.created_at,
         updated_at: user.updated_at,
       },

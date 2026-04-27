@@ -53,6 +53,12 @@ export class UserResponseDto {
   medals_count: number;
 
   @ApiProperty({
+    example: 120,
+    description: 'Cartographer reputation points',
+  })
+  cartographer_points: number;
+
+  @ApiProperty({
     example: '2026-04-16T10:30:00Z',
     description: 'Creation date',
   })

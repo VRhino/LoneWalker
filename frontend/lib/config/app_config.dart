@@ -32,7 +32,7 @@ class AppConfig {
   // Map Configuration
   static const double mapDefaultZoom = 15.0;
   static const double fogOfWarRadius =
-      75.0; // meters — radius cleared per GPS point
+      15.0; // meters — radius cleared per GPS point (~street width diameter)
   static const double treasureRadiusActivation =
       75.0; // meters — proximity to show treasure
   static const double treasureRadiusClaim = 10.0; // meters — proximity to claim

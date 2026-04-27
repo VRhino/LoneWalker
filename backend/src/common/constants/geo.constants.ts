@@ -7,6 +7,9 @@ export const WGS84_LAT_MAX = 90;
 export const WGS84_LNG_MIN = -180;
 export const WGS84_LNG_MAX = 180;
 
+export const FOG_OF_WAR_RADIUS_M = 15;
+export const EXPLORATION_DEGRADATION_DAYS = 7;
+
 export function buildWktPoint(lng: number, lat: number): string {
   return `POINT(${lng} ${lat})`;
 }

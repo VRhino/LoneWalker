@@ -19,4 +19,21 @@ class ApiEndpoints {
   static String treasureById(String id) => '/treasures/$id';
   static String treasureClaim(String id) => '/treasures/$id/claim';
   static String treasureWallOfFame(String id) => '/treasures/$id/wall-of-fame';
+
+  // Ranking
+  static const String rankingGlobal = '/ranking/global';
+  static const String rankingWeekly = '/ranking/weekly';
+  static const String rankingPosition = '/ranking/position';
+  static String rankingDistrict(String id) => '/ranking/district/$id';
+
+  // Landmarks
+  static const String landmarks = '/landmarks';
+  static const String landmarksApproved = '/landmarks/approved';
+  static String landmarkById(String id) => '/landmarks/$id';
+  static String landmarkVotes(String id) => '/landmarks/$id/votes';
+  static String landmarkComments(String id) => '/landmarks/$id/comments';
+
+  // Medals
+  static const String medals = '/medals';
+  static const String medalsUnlocked = '/medals/my';
 }

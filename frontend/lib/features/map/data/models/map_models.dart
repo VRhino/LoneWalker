@@ -87,3 +87,27 @@ class DistrictExplorationModel extends DistrictExploration {
         'mastery_level': masteryLevel,
       };
 }
+
+class ExploredAreaModel extends ExploredArea {
+  const ExploredAreaModel({
+    required super.latitude,
+    required super.longitude,
+    required super.exploredAt,
+  });
+
+  // Parsea un Feature del GeoJSON FeatureCollection devuelto por GET /exploration/map
+  // Estructura: { geometry: { coordinates: [lng, lat] }, properties: { timestamp: '...' } }
+  factory ExploredAreaModel.fromGeoJsonFeature(Map<String, dynamic> feature) {
+    final geometry = feature['geometry'] as Map<String, dynamic>;
+    final coords = geometry['coordinates'] as List<dynamic>;
+    final properties = feature['properties'] as Map<String, dynamic>? ?? {};
+
+    return ExploredAreaModel(
+      longitude: (coords[0] as num).toDouble(),
+      latitude: (coords[1] as num).toDouble(),
+      exploredAt:
+          DateTime.tryParse(properties['timestamp']?.toString() ?? '') ??
+              DateTime.now(),
+    );
+  }
+}

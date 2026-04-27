@@ -10,9 +10,18 @@ import 'features/auth/presentation/bloc/auth_event.dart';
 import 'features/auth/presentation/bloc/auth_state.dart';
 import 'features/auth/presentation/pages/login_page.dart';
 import 'features/auth/presentation/pages/register_page.dart';
+import 'features/landmarks/data/datasources/landmark_remote_datasource.dart';
+import 'features/landmarks/presentation/bloc/landmark_bloc.dart';
+import 'features/landmarks/presentation/pages/landmarks_page.dart';
 import 'features/map/data/datasources/map_remote_datasource.dart';
 import 'features/map/presentation/bloc/map_bloc.dart';
 import 'features/map/presentation/pages/map_page.dart';
+import 'features/profile/data/datasources/medals_remote_datasource.dart';
+import 'features/profile/presentation/bloc/profile_bloc.dart';
+import 'features/profile/presentation/pages/profile_page.dart';
+import 'features/ranking/data/datasources/ranking_remote_datasource.dart';
+import 'features/ranking/presentation/bloc/ranking_bloc.dart';
+import 'features/ranking/presentation/pages/ranking_page.dart';
 import 'features/treasure/data/datasources/treasure_remote_datasource.dart';
 import 'features/treasure/presentation/bloc/treasure_bloc.dart';
 import 'features/treasure/presentation/pages/treasure_page.dart';
@@ -47,6 +56,21 @@ class MyApp extends StatelessWidget {
           create: (_) => TreasureBloc(
             remoteDataSource:
                 TreasureRemoteDataSourceImpl(apiClient: apiClient),
+          ),
+        ),
+        BlocProvider(
+          create: (_) => RankingBloc(
+            remoteDataSource: RankingRemoteDataSource(apiClient: apiClient),
+          ),
+        ),
+        BlocProvider(
+          create: (_) => LandmarkBloc(
+            remoteDataSource: LandmarkRemoteDataSource(apiClient: apiClient),
+          ),
+        ),
+        BlocProvider(
+          create: (_) => ProfileBloc(
+            remoteDataSource: MedalsRemoteDataSource(apiClient: apiClient),
           ),
         ),
       ],
@@ -152,6 +176,9 @@ class _MainAppState extends State<_MainApp> {
   static const _tabs = [
     MapPage(),
     TreasurePage(),
+    RankingPage(),
+    LandmarksPage(),
+    ProfilePage(),
   ];
 
   @override
@@ -164,6 +191,7 @@ class _MainAppState extends State<_MainApp> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
+        type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.map),
@@ -172,6 +200,18 @@ class _MainAppState extends State<_MainApp> {
           BottomNavigationBarItem(
             icon: Icon(Icons.radar),
             label: 'Tesoros',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.leaderboard),
+            label: 'Ranking',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.place),
+            label: 'Landmarks',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Perfil',
           ),
         ],
       ),

@@ -19,16 +19,11 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   }
 
   List<ExploredArea> _parseExploredAreas(Map<String, dynamic> mapData) {
-    final raw = mapData['explored_areas'] as List<dynamic>? ?? [];
-    return raw
+    final fogOfWar = mapData['fog_of_war'] as Map<String, dynamic>?;
+    final features = fogOfWar?['features'] as List<dynamic>? ?? [];
+    return features
         .whereType<Map<String, dynamic>>()
-        .map((e) => ExploredArea(
-              latitude: (e['latitude'] as num).toDouble(),
-              longitude: (e['longitude'] as num).toDouble(),
-              exploredAt:
-                  DateTime.tryParse(e['explored_at']?.toString() ?? '') ??
-                      DateTime.now(),
-            ))
+        .map(ExploredAreaModel.fromGeoJsonFeature)
         .toList();
   }
 
@@ -122,13 +117,18 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         longitude: event.longitude,
         accuracy: event.accuracy,
       );
+      final newPoint = ExploredAreaModel(
+        latitude: event.latitude,
+        longitude: event.longitude,
+        exploredAt: DateTime.now(),
+      );
 
       emit(ExplorationRegistered(
         stats: stats,
         xpEarned: stats.xpEarned,
         newAreasCleared: stats.newAreasCleared,
         userLocation: userLocation,
-        exploredAreas: prevAreas,
+        exploredAreas: [...prevAreas, newPoint],
       ));
     } catch (e) {
       emit(MapError(message: e.toString().replaceFirst('Exception: ', '')));

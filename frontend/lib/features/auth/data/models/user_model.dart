@@ -10,6 +10,7 @@ class UserModel extends User {
     required super.explorationPercent,
     required super.totalXp,
     required super.medalsCount,
+    required super.cartographerPoints,
     required super.createdAt,
     required super.updatedAt,
   });
@@ -25,6 +26,7 @@ class UserModel extends User {
           double.tryParse(json['exploration_percent']?.toString() ?? '') ?? 0.0,
       totalXp: json['total_xp'] as int? ?? 0,
       medalsCount: json['medals_count'] as int? ?? 0,
+      cartographerPoints: json['cartographer_points'] as int? ?? 0,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
@@ -40,6 +42,7 @@ class UserModel extends User {
       'exploration_percent': explorationPercent,
       'total_xp': totalXp,
       'medals_count': medalsCount,
+      'cartographer_points': cartographerPoints,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };

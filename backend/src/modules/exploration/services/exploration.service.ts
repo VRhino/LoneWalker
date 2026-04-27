@@ -1,13 +1,17 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between } from 'typeorm';
+import { Repository, Between, MoreThanOrEqual } from 'typeorm';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { ExplorationEntity } from '../entities/exploration.entity';
 import { CreateExplorationDto } from '../dto/create-exploration.dto';
 import { ExplorationProgressDto } from '../dto/exploration-response.dto';
 import { UsersService } from '../../users/users.service';
+import { MedalsService } from '../../medals/medals.service';
 import {
   GPS_ACCURACY_THRESHOLD_M,
   DEFAULT_SEARCH_RADIUS_M,
+  FOG_OF_WAR_RADIUS_M,
+  EXPLORATION_DEGRADATION_DAYS,
   buildWktPoint,
 } from '../../../common/constants/geo.constants';
 import { MasteryLevel } from '../../../common/enums/mastery-level.enum';
@@ -22,6 +26,7 @@ export class ExplorationService {
     @InjectRepository(ExplorationEntity)
     private explorationRepository: Repository<ExplorationEntity>,
     private usersService: UsersService,
+    private medalsService: MedalsService,
   ) {}
 
   async registerExploration(
@@ -47,6 +52,12 @@ export class ExplorationService {
 
     const user = await this.usersService.findByIdOrThrow(userId);
 
+    const newArea = await this.isNewArea(
+      userId,
+      createExplorationDto.latitude,
+      createExplorationDto.longitude,
+    );
+
     const exploration = this.explorationRepository.create({
       user_id: userId,
       latitude: createExplorationDto.latitude,
@@ -61,7 +72,7 @@ export class ExplorationService {
 
     await this.explorationRepository.save(exploration);
 
-    const newAreaPercent = this.calculateNewAreas(user.exploration_percent);
+    const newAreaPercent = newArea ? this.calculateNewAreas(user.exploration_percent) : 0;
     const xpEarned = Math.floor(newAreaPercent * BASE_XP_EXPLORATION);
 
     const newExplorationPercent = Math.min(
@@ -75,6 +86,8 @@ export class ExplorationService {
       newExplorationPercent,
       newTotalXp,
     );
+
+    await this.medalsService.checkAndAwardMedals(userId);
 
     return {
       user_id: userId,
@@ -109,10 +122,13 @@ export class ExplorationService {
     longitude: number,
     radiusMeters: number = DEFAULT_SEARCH_RADIUS_M,
   ) {
+    const cutoffDate = this.getActiveCutoffDate();
+
     const explorations = await this.explorationRepository
       .createQueryBuilder('e')
       .select(['e.latitude', 'e.longitude', 'e.explored_at'])
       .where('e.user_id = :userId', { userId })
+      .andWhere('e.explored_at >= :cutoff', { cutoff: cutoffDate })
       .andWhere(
         'ST_DWithin(e.location::geography, ST_MakePoint(:lng, :lat)::geography, :radius)',
         { lng: longitude, lat: latitude, radius: radiusMeters },
@@ -196,6 +212,44 @@ export class ExplorationService {
       distance_km: 0,
       time_hours: 0,
     };
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_1AM)
+  async recalculateExpiredExplorations(): Promise<void> {
+    const users = await this.usersService.findAllWithExploration();
+    const cutoffDate = this.getActiveCutoffDate();
+
+    for (const user of users) {
+      const activeCount = await this.explorationRepository.count({
+        where: {
+          user_id: user.id,
+          explored_at: MoreThanOrEqual(cutoffDate),
+        },
+      });
+
+      const newPercent = Math.min(activeCount * AREA_INCREMENT_PER_POINT, 100);
+      if (newPercent !== Number(user.exploration_percent)) {
+        await this.usersService.updateExplorationStats(user.id, newPercent, user.total_xp);
+      }
+    }
+  }
+
+  private getActiveCutoffDate(): Date {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - EXPLORATION_DEGRADATION_DAYS);
+    return cutoff;
+  }
+
+  private async isNewArea(userId: string, latitude: number, longitude: number): Promise<boolean> {
+    const count = await this.explorationRepository
+      .createQueryBuilder('e')
+      .where('e.user_id = :userId', { userId })
+      .andWhere(
+        'ST_DWithin(e.location::geography, ST_MakePoint(:lng, :lat)::geography, :radius)',
+        { lng: longitude, lat: latitude, radius: FOG_OF_WAR_RADIUS_M },
+      )
+      .getCount();
+    return count === 0;
   }
 
   private calculateNewAreas(currentPercent: number): number {

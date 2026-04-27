@@ -18,6 +18,7 @@ final testUser = UserModel(
   explorationPercent: 5.5,
   totalXp: 100,
   medalsCount: 2,
+  cartographerPoints: 0,
   createdAt: DateTime(2024, 1, 1),
   updatedAt: DateTime(2024, 1, 1),
 );

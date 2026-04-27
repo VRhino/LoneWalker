@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { typeOrmAsyncConfig } from './config/database.config';
@@ -8,6 +9,9 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { ExplorationModule } from './modules/exploration/exploration.module';
 import { TreasuresModule } from './modules/treasures/treasures.module';
+import { MedalsModule } from './modules/medals/medals.module';
+import { LandmarksModule } from './modules/landmarks/landmarks.module';
+import { RankingModule } from './modules/ranking/ranking.module';
 
 @Module({
   imports: [
@@ -16,13 +20,15 @@ import { TreasuresModule } from './modules/treasures/treasures.module';
       envFilePath: ['.env.local', '.env'],
     }),
     TypeOrmModule.forRootAsync(typeOrmAsyncConfig),
+    ScheduleModule.forRoot(),
     // Feature modules
     AuthModule,
     UsersModule,
+    MedalsModule,
     ExplorationModule,
     TreasuresModule,
-    // TBD: LandmarksModule,
-    // TBD: RankingModule,
+    LandmarksModule,
+    RankingModule,
   ],
   controllers: [AppController],
   providers: [AppService],

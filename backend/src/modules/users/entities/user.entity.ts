@@ -53,6 +53,9 @@ export class UserEntity {
   @Column({ type: 'integer', default: 0 })
   medals_count: number;
 
+  @Column({ type: 'integer', default: 0 })
+  cartographer_points: number;
+
   @Column({ type: 'boolean', default: true })
   is_active: boolean;
 

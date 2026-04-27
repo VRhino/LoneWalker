@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, MoreThan } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { UserEntity } from './entities/user.entity';
 import { BCRYPT_SALT_ROUNDS } from '../../common/constants/auth.constants';
@@ -120,9 +120,41 @@ export class UsersService {
       exploration_percent: user.exploration_percent,
       total_xp: user.total_xp,
       medals_count: user.medals_count,
+      cartographer_points: user.cartographer_points,
       created_at: user.created_at,
       updated_at: user.updated_at,
     };
+  }
+
+  async addXp(id: string, xpAmount: number): Promise<void> {
+    await this.usersRepository.increment({ id }, 'total_xp', xpAmount);
+  }
+
+  async incrementMedalsCount(id: string): Promise<void> {
+    await this.usersRepository.increment({ id }, 'medals_count', 1);
+  }
+
+  async findAllWithExploration(): Promise<UserEntity[]> {
+    return this.usersRepository.find({
+      where: { exploration_percent: MoreThan(0) },
+      select: ['id', 'exploration_percent', 'total_xp'],
+    });
+  }
+
+  async addCartographerPoints(id: string, points: number): Promise<void> {
+    if (points >= 0) {
+      await this.usersRepository.increment(
+        { id },
+        'cartographer_points',
+        points,
+      );
+    } else {
+      await this.usersRepository.decrement(
+        { id },
+        'cartographer_points',
+        Math.abs(points),
+      );
+    }
   }
 
   async getPublicProfile(id: string) {

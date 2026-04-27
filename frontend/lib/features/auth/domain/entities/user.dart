@@ -9,6 +9,7 @@ class User extends Equatable {
   final double explorationPercent;
   final int totalXp;
   final int medalsCount;
+  final int cartographerPoints;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -21,6 +22,7 @@ class User extends Equatable {
     required this.explorationPercent,
     required this.totalXp,
     required this.medalsCount,
+    required this.cartographerPoints,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -35,6 +37,7 @@ class User extends Equatable {
         explorationPercent,
         totalXp,
         medalsCount,
+        cartographerPoints,
         createdAt,
         updatedAt,
       ];
