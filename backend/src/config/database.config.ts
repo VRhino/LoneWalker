@@ -19,7 +19,14 @@ function buildConnectionOptions(
   };
 
   if (databaseUrl) {
-    return { ...base, url: databaseUrl, ssl: { rejectUnauthorized: false } };
+    const isInternal =
+      databaseUrl.includes('railway.internal') ||
+      databaseUrl.includes('sslmode=disable');
+    return {
+      ...base,
+      url: databaseUrl,
+      ssl: isInternal ? false : { rejectUnauthorized: false },
+    };
   }
 
   return {

@@ -1,7 +1,7 @@
 # ============================================
 # Build stage
 # ============================================
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -16,7 +16,7 @@ RUN pnpm build
 # ============================================
 # Production stage
 # ============================================
-FROM node:18-alpine
+FROM node:20-alpine
 
 WORKDIR /app
 
@@ -28,6 +28,7 @@ COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --prod --frozen-lockfile && pnpm store prune
 
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/scripts ./scripts
 
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001

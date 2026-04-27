@@ -24,7 +24,31 @@
       "Bash(pnpm test *)",
       "Bash(chmod +x *)",
       "Bash(git add *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(pnpm i *)",
+      "Bash(pnpm setup *)",
+      "Bash(export PNPM_HOME=\"/c/Users/VRINO/AppData/Local/pnpm\")",
+      "Bash(export PATH=\"$PNPM_HOME:$PATH\")",
+      "Bash(pnpm approve-builds *)",
+      "Bash(railway --version)",
+      "Bash(pnpm config *)",
+      "Bash(/c/Users/VRINO/AppData/Local/pnpm/railway --version)",
+      "Bash(node *)",
+      "Bash(echo \"EXIT: $?\")",
+      "PowerShell(railway *)",
+      "Bash(npm i *)",
+      "Bash(bash *)",
+      "Bash(railway init *)",
+      "Bash(railway add *)",
+      "Bash(railway status *)",
+      "Bash(railway service *)",
+      "Bash(railway variables *)",
+      "Bash(railway up *)",
+      "Bash(railway logs *)",
+      "Bash(railway connect *)",
+      "Bash(railway run *)",
+      "Bash(railway domain *)",
+      "Bash(flutter run *)"
     ]
   }
 }
