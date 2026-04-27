@@ -12,7 +12,19 @@
       "Bash(grep -rn \"context\\\\\\\\.read.*Bloc.*add\\\\|context\\\\\\\\.read.*page\\\\|context\\\\\\\\.of\" /c/Users/VRINO/Desarrollo/LoneWalker/frontend/lib/features --include=\"*.dart\")",
       "Bash(awk 'BEGIN {sum=0} {split\\($0,a,\":\"\\); if \\(a[2]+0 > 0\\) {sum++}} END {print \"Total files with imports:\", sum}')",
       "Bash(xargs grep *)",
-      "Bash(flutter analyze *)"
+      "Bash(flutter analyze *)",
+      "Bash(flutter pub *)",
+      "Bash(flutter test *)",
+      "Bash(dart format *)",
+      "Bash(npm run *)",
+      "Bash(git commit *)",
+      "Bash(pnpm add *)",
+      "Bash(wc *)",
+      "Bash(python3 *)",
+      "Bash(pnpm test *)",
+      "Bash(chmod +x *)",
+      "Bash(git add *)",
+      "Bash(git push *)"
     ]
   }
 }

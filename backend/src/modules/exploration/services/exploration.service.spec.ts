@@ -5,7 +5,10 @@ import { ExplorationService } from './exploration.service';
 import { ExplorationEntity } from '../entities/exploration.entity';
 import { UsersService } from '../../users/users.service';
 import { MedalsService } from '../../medals/medals.service';
-import { makeUser } from '../../../common/test/test-factories';
+import {
+  makeUser,
+  mockQueryBuilder,
+} from '../../../common/test/test-factories';
 
 describe('ExplorationService', () => {
   let service: ExplorationService;
@@ -43,6 +46,9 @@ describe('ExplorationService', () => {
 
     service = module.get<ExplorationService>(ExplorationService);
     jest.clearAllMocks();
+    mockExplorationRepo.createQueryBuilder.mockReturnValue(
+      mockQueryBuilder([]),
+    );
     mockUsersService.updateExplorationStats.mockResolvedValue(undefined);
     mockMedalsService.checkAndAwardMedals.mockResolvedValue(undefined);
   });
