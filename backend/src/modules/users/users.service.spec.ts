@@ -68,7 +68,11 @@ describe('UsersService', () => {
       mockRepo.create.mockReturnValue(newUser);
       mockRepo.save.mockResolvedValue(newUser);
 
-      const result = await service.create('newuser', 'new@example.com', 'password123');
+      const result = await service.create(
+        'newuser',
+        'new@example.com',
+        'password123',
+      );
 
       expect(bcrypt.hash).toHaveBeenCalled();
       expect(mockRepo.save).toHaveBeenCalled();
@@ -123,7 +127,10 @@ describe('UsersService', () => {
       mockRepo.findOne.mockResolvedValue(user);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
-      const result = await service.verifyRefreshToken('user-id', 'valid-refresh-token');
+      const result = await service.verifyRefreshToken(
+        'user-id',
+        'valid-refresh-token',
+      );
       expect(result).toBe(true);
     });
   });

@@ -9,7 +9,12 @@ import {
   LandmarkStatus,
   LandmarkCategory,
 } from '../../modules/landmarks/entities/landmark.entity';
-import { MedalEntity, MedalKey, MedalRarity, MedalCategory } from '../../modules/medals/entities/medal.entity';
+import {
+  MedalEntity,
+  MedalKey,
+  MedalRarity,
+  MedalCategory,
+} from '../../modules/medals/entities/medal.entity';
 import { PrivacyMode } from '../enums/privacy-mode.enum';
 
 export function makeUser(overrides: Partial<UserEntity> = {}): UserEntity {
@@ -152,15 +157,33 @@ export function mockQueryBuilder(result: unknown = []) {
     execute: jest.fn().mockResolvedValue(undefined),
     getRawMany: jest.fn().mockResolvedValue(result),
     getMany: jest.fn().mockResolvedValue(result),
-    getManyAndCount: jest.fn().mockResolvedValue([result, (result as unknown[]).length]),
+    getManyAndCount: jest
+      .fn()
+      .mockResolvedValue([result, (result as unknown[]).length]),
     getCount: jest.fn().mockResolvedValue(0),
   };
 
   // All fluent methods return this
-  const fluent = ['select', 'addSelect', 'where', 'andWhere', 'innerJoin',
-    'innerJoinAndSelect', 'leftJoinAndSelect', 'orderBy', 'addOrderBy',
-    'groupBy', 'limit', 'skip', 'take', 'setParameters',
-    'insert', 'into', 'values', 'orUpdate'];
+  const fluent = [
+    'select',
+    'addSelect',
+    'where',
+    'andWhere',
+    'innerJoin',
+    'innerJoinAndSelect',
+    'leftJoinAndSelect',
+    'orderBy',
+    'addOrderBy',
+    'groupBy',
+    'limit',
+    'skip',
+    'take',
+    'setParameters',
+    'insert',
+    'into',
+    'values',
+    'orUpdate',
+  ];
   fluent.forEach(m => (qb as Record<string, jest.Mock>)[m].mockReturnValue(qb));
 
   return qb;

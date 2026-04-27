@@ -2,11 +2,18 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { BadRequestException, ConflictException } from '@nestjs/common';
 import { LandmarksService } from './landmarks.service';
-import { LandmarkEntity, LandmarkCategory, LandmarkStatus } from './entities/landmark.entity';
+import {
+  LandmarkEntity,
+  LandmarkCategory,
+  LandmarkStatus,
+} from './entities/landmark.entity';
 import { LandmarkVoteEntity } from './entities/landmark-vote.entity';
 import { UsersService } from '../users/users.service';
 import { MedalsService } from '../medals/medals.service';
-import { makeLandmark, makeUser, mockQueryBuilder } from '../../common/test/test-factories';
+import {
+  makeLandmark,
+  mockQueryBuilder,
+} from '../../common/test/test-factories';
 
 describe('LandmarksService', () => {
   let service: LandmarksService;
@@ -38,8 +45,14 @@ describe('LandmarksService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         LandmarksService,
-        { provide: getRepositoryToken(LandmarkEntity), useValue: mockLandmarkRepo },
-        { provide: getRepositoryToken(LandmarkVoteEntity), useValue: mockVoteRepo },
+        {
+          provide: getRepositoryToken(LandmarkEntity),
+          useValue: mockLandmarkRepo,
+        },
+        {
+          provide: getRepositoryToken(LandmarkVoteEntity),
+          useValue: mockVoteRepo,
+        },
         { provide: UsersService, useValue: mockUsersService },
         { provide: MedalsService, useValue: mockMedalsService },
       ],
@@ -60,7 +73,7 @@ describe('LandmarksService', () => {
     it('throws BadRequestException when user is more than 50m from landmark', async () => {
       await expect(
         service.proposeLandmark('user-1', {
-          user_latitude: 40.4163,  // ~55m south
+          user_latitude: 40.4163, // ~55m south
           user_longitude: -3.7038,
           latitude: landmarkLat,
           longitude: landmarkLng,
@@ -77,7 +90,7 @@ describe('LandmarksService', () => {
       mockLandmarkRepo.save.mockResolvedValue(landmark);
 
       const result = await service.proposeLandmark('user-1', {
-        user_latitude: landmarkLat,  // exactly on the landmark
+        user_latitude: landmarkLat, // exactly on the landmark
         user_longitude: landmarkLng,
         latitude: landmarkLat,
         longitude: landmarkLng,
@@ -87,7 +100,10 @@ describe('LandmarksService', () => {
       });
 
       expect(mockLandmarkRepo.save).toHaveBeenCalled();
-      expect(mockUsersService.addCartographerPoints).toHaveBeenCalledWith('user-1', 10);
+      expect(mockUsersService.addCartographerPoints).toHaveBeenCalledWith(
+        'user-1',
+        10,
+      );
       expect(result).toHaveProperty('id');
     });
   });
@@ -101,7 +117,10 @@ describe('LandmarksService', () => {
       mockLandmarkRepo.findOne.mockResolvedValue(landmark);
 
       await expect(
-        service.voteLandmark(voterId, landmarkId, { vote: 1, comment: 'This is a mandatory comment' }),
+        service.voteLandmark(voterId, landmarkId, {
+          vote: 1,
+          comment: 'This is a mandatory comment',
+        }),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -111,7 +130,10 @@ describe('LandmarksService', () => {
       mockVoteRepo.findOne.mockResolvedValue({ id: 'existing-vote' });
 
       await expect(
-        service.voteLandmark(voterId, landmarkId, { vote: 1, comment: 'Mandatory comment here' }),
+        service.voteLandmark(voterId, landmarkId, {
+          vote: 1,
+          comment: 'Mandatory comment here',
+        }),
       ).rejects.toThrow(ConflictException);
     });
 
@@ -129,7 +151,10 @@ describe('LandmarksService', () => {
       mockVoteRepo.find.mockResolvedValue([]);
       mockLandmarkRepo.save.mockImplementation(async (l: LandmarkEntity) => l);
 
-      await service.voteLandmark(voterId, landmarkId, { vote: 1, comment: 'This is a valid vote comment' });
+      await service.voteLandmark(voterId, landmarkId, {
+        vote: 1,
+        comment: 'This is a valid vote comment',
+      });
 
       const saveCalls = mockLandmarkRepo.save.mock.calls as [LandmarkEntity][];
       const savedWithApproved = saveCalls.some(

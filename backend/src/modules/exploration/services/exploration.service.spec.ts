@@ -32,7 +32,10 @@ describe('ExplorationService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ExplorationService,
-        { provide: getRepositoryToken(ExplorationEntity), useValue: mockExplorationRepo },
+        {
+          provide: getRepositoryToken(ExplorationEntity),
+          useValue: mockExplorationRepo,
+        },
         { provide: UsersService, useValue: mockUsersService },
         { provide: MedalsService, useValue: mockMedalsService },
       ],
@@ -60,14 +63,20 @@ describe('ExplorationService', () => {
 
     it('throws BadRequestException when GPS accuracy exceeds 50m', async () => {
       await expect(
-        service.registerExploration('user-1', { ...validDto, accuracy_meters: 51 }),
+        service.registerExploration('user-1', {
+          ...validDto,
+          accuracy_meters: 51,
+        }),
       ).rejects.toThrow(BadRequestException);
     });
 
     it('saves exploration record and updates user stats on valid input', async () => {
       const user = makeUser({ exploration_percent: 10, total_xp: 100 });
       mockUsersService.findByIdOrThrow.mockResolvedValue(user);
-      mockExplorationRepo.create.mockReturnValue({ user_id: 'user-1', ...validDto });
+      mockExplorationRepo.create.mockReturnValue({
+        user_id: 'user-1',
+        ...validDto,
+      });
       mockExplorationRepo.save.mockResolvedValue({ id: 'exp-1' });
 
       const result = await service.registerExploration('user-1', validDto);

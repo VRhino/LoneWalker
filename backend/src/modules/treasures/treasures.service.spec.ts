@@ -2,11 +2,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { TreasuresService } from './treasures.service';
-import { TreasureEntity, TreasureRarity, TreasureStatus } from './entities/treasure.entity';
+import { TreasureEntity, TreasureRarity } from './entities/treasure.entity';
 import { TreasureClaimEntity } from './entities/treasure-claim.entity';
 import { UsersService } from '../users/users.service';
 import { MedalsService } from '../medals/medals.service';
-import { makeTreasure, mockQueryBuilder } from '../../common/test/test-factories';
+import {
+  makeTreasure,
+  mockQueryBuilder,
+} from '../../common/test/test-factories';
 
 describe('TreasuresService', () => {
   let service: TreasuresService;
@@ -39,8 +42,14 @@ describe('TreasuresService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TreasuresService,
-        { provide: getRepositoryToken(TreasureEntity), useValue: mockTreasureRepo },
-        { provide: getRepositoryToken(TreasureClaimEntity), useValue: mockClaimRepo },
+        {
+          provide: getRepositoryToken(TreasureEntity),
+          useValue: mockTreasureRepo,
+        },
+        {
+          provide: getRepositoryToken(TreasureClaimEntity),
+          useValue: mockClaimRepo,
+        },
         { provide: UsersService, useValue: mockUsersService },
         { provide: MedalsService, useValue: mockMedalsService },
       ],
@@ -57,7 +66,7 @@ describe('TreasuresService', () => {
     // User far away: ~22m north
     const treasureLat = 40.4168;
     const treasureLng = -3.7038;
-    const userFarLat = 40.4170;
+    const userFarLat = 40.417;
     const userFarLng = -3.7038;
     // User close: ~1.5m offset
     const userCloseLat = 40.41681;
@@ -67,35 +76,68 @@ describe('TreasuresService', () => {
       mockTreasureRepo.findOneBy.mockResolvedValue(null);
 
       await expect(
-        service.claimTreasure('user-1', 'treasure-1', treasureLat, treasureLng, 5),
+        service.claimTreasure(
+          'user-1',
+          'treasure-1',
+          treasureLat,
+          treasureLng,
+          5,
+        ),
       ).rejects.toThrow(NotFoundException);
     });
 
     it('throws BadRequestException when user is more than 10m away', async () => {
-      const treasure = makeTreasure({ latitude: treasureLat, longitude: treasureLng });
+      const treasure = makeTreasure({
+        latitude: treasureLat,
+        longitude: treasureLng,
+      });
       mockTreasureRepo.findOneBy.mockResolvedValue(treasure);
 
       await expect(
-        service.claimTreasure('user-1', 'treasure-1', userFarLat, userFarLng, 5),
+        service.claimTreasure(
+          'user-1',
+          'treasure-1',
+          userFarLat,
+          userFarLng,
+          5,
+        ),
       ).rejects.toThrow(BadRequestException);
     });
 
     it('throws BadRequestException when GPS accuracy exceeds 50m', async () => {
-      const treasure = makeTreasure({ latitude: treasureLat, longitude: treasureLng });
+      const treasure = makeTreasure({
+        latitude: treasureLat,
+        longitude: treasureLng,
+      });
       mockTreasureRepo.findOneBy.mockResolvedValue(treasure);
 
       await expect(
-        service.claimTreasure('user-1', 'treasure-1', userCloseLat, userCloseLng, 51),
+        service.claimTreasure(
+          'user-1',
+          'treasure-1',
+          userCloseLat,
+          userCloseLng,
+          51,
+        ),
       ).rejects.toThrow(BadRequestException);
     });
 
     it('throws BadRequestException when user already claimed this treasure', async () => {
-      const treasure = makeTreasure({ latitude: treasureLat, longitude: treasureLng });
+      const treasure = makeTreasure({
+        latitude: treasureLat,
+        longitude: treasureLng,
+      });
       mockTreasureRepo.findOneBy.mockResolvedValue(treasure);
       mockClaimRepo.findOneBy.mockResolvedValue({ id: 'claim-existing' });
 
       await expect(
-        service.claimTreasure('user-1', 'treasure-1', userCloseLat, userCloseLng, 5),
+        service.claimTreasure(
+          'user-1',
+          'treasure-1',
+          userCloseLat,
+          userCloseLng,
+          5,
+        ),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -112,7 +154,11 @@ describe('TreasuresService', () => {
       mockTreasureRepo.save.mockResolvedValue(treasure);
 
       const result = await service.claimTreasure(
-        'user-1', 'treasure-1', userCloseLat, userCloseLng, 5,
+        'user-1',
+        'treasure-1',
+        userCloseLat,
+        userCloseLng,
+        5,
       );
 
       expect(mockClaimRepo.save).toHaveBeenCalled();

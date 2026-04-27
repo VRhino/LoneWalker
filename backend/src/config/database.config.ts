@@ -1,7 +1,12 @@
-import { TypeOrmModuleAsyncOptions, TypeOrmModuleOptions } from '@nestjs/typeorm';
+import {
+  TypeOrmModuleAsyncOptions,
+  TypeOrmModuleOptions,
+} from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 
-function buildConnectionOptions(configService: ConfigService): TypeOrmModuleOptions {
+function buildConnectionOptions(
+  configService: ConfigService,
+): TypeOrmModuleOptions {
   const databaseUrl = configService.get<string>('DATABASE_URL');
   const base = {
     type: 'postgres' as const,
@@ -28,6 +33,7 @@ function buildConnectionOptions(configService: ConfigService): TypeOrmModuleOpti
 }
 
 export const typeOrmAsyncConfig: TypeOrmModuleAsyncOptions = {
-  useFactory: async (configService: ConfigService) => buildConnectionOptions(configService),
+  useFactory: async (configService: ConfigService) =>
+    buildConnectionOptions(configService),
   inject: [ConfigService],
 };

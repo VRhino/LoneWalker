@@ -1,13 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { MedalsService } from './medals.service';
-import { MedalEntity, MedalKey, MedalRarity, MedalCategory } from './entities/medal.entity';
+import { MedalEntity, MedalKey } from './entities/medal.entity';
 import { UserMedalEntity } from './entities/user-medal.entity';
 import { TreasureClaimEntity } from '../treasures/entities/treasure-claim.entity';
 import { LandmarkVoteEntity } from '../landmarks/entities/landmark-vote.entity';
 import { LandmarkEntity } from '../landmarks/entities/landmark.entity';
 import { UsersService } from '../users/users.service';
-import { makeUser, makeMedal, mockQueryBuilder } from '../../common/test/test-factories';
+import {
+  makeUser,
+  makeMedal,
+  mockQueryBuilder,
+} from '../../common/test/test-factories';
 
 describe('MedalsService', () => {
   let service: MedalsService;
@@ -49,10 +53,22 @@ describe('MedalsService', () => {
       providers: [
         MedalsService,
         { provide: getRepositoryToken(MedalEntity), useValue: mockMedalRepo },
-        { provide: getRepositoryToken(UserMedalEntity), useValue: mockUserMedalRepo },
-        { provide: getRepositoryToken(TreasureClaimEntity), useValue: mockClaimRepo },
-        { provide: getRepositoryToken(LandmarkVoteEntity), useValue: mockVoteRepo },
-        { provide: getRepositoryToken(LandmarkEntity), useValue: mockLandmarkRepo },
+        {
+          provide: getRepositoryToken(UserMedalEntity),
+          useValue: mockUserMedalRepo,
+        },
+        {
+          provide: getRepositoryToken(TreasureClaimEntity),
+          useValue: mockClaimRepo,
+        },
+        {
+          provide: getRepositoryToken(LandmarkVoteEntity),
+          useValue: mockVoteRepo,
+        },
+        {
+          provide: getRepositoryToken(LandmarkEntity),
+          useValue: mockLandmarkRepo,
+        },
         { provide: UsersService, useValue: mockUsersService },
       ],
     }).compile();
@@ -87,7 +103,10 @@ describe('MedalsService', () => {
       const user = makeUser({ exploration_percent: 0.5 });
       mockUsersService.findById.mockResolvedValue(user);
 
-      const firstStepsMedal = makeMedal({ id: 'medal-first-steps', key: MedalKey.FIRST_STEPS });
+      const firstStepsMedal = makeMedal({
+        id: 'medal-first-steps',
+        key: MedalKey.FIRST_STEPS,
+      });
       mockMedalRepo.find.mockResolvedValue([firstStepsMedal]);
       mockUserMedalRepo.find.mockResolvedValue([]); // no medals yet
       mockUserMedalRepo.create.mockReturnValue({ id: 'um-1' });
@@ -102,7 +121,10 @@ describe('MedalsService', () => {
       const user = makeUser({ exploration_percent: 1 });
       mockUsersService.findById.mockResolvedValue(user);
 
-      const firstStepsMedal = makeMedal({ id: 'medal-first-steps', key: MedalKey.FIRST_STEPS });
+      const firstStepsMedal = makeMedal({
+        id: 'medal-first-steps',
+        key: MedalKey.FIRST_STEPS,
+      });
       mockMedalRepo.find.mockResolvedValue([firstStepsMedal]);
       // Medal already unlocked
       mockUserMedalRepo.find.mockResolvedValue([

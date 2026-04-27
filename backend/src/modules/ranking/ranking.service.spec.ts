@@ -48,9 +48,15 @@ describe('RankingService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         RankingService,
-        { provide: getRepositoryToken(RankingEntity), useValue: mockRankingRepo },
+        {
+          provide: getRepositoryToken(RankingEntity),
+          useValue: mockRankingRepo,
+        },
         { provide: getRepositoryToken(UserEntity), useValue: mockUserRepo },
-        { provide: getRepositoryToken(TreasureClaimEntity), useValue: mockClaimRepo },
+        {
+          provide: getRepositoryToken(TreasureClaimEntity),
+          useValue: mockClaimRepo,
+        },
         { provide: DataSource, useValue: mockDataSource },
       ],
     }).compile();

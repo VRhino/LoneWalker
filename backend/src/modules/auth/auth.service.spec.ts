@@ -8,8 +8,23 @@ import { makeUser } from '../../common/test/test-factories';
 
 describe('AuthService', () => {
   let service: AuthService;
-  let usersService: jest.Mocked<Pick<UsersService, 'create' | 'findByEmail' | 'verifyPassword' | 'updateRefreshToken' | 'updateLastLogin' | 'verifyRefreshToken'>>;
-  let tokenService: jest.Mocked<Pick<TokenService, 'generateTokens' | 'generateAccessToken' | 'verifyAndDecode'>>;
+  let _usersService: jest.Mocked<
+    Pick<
+      UsersService,
+      | 'create'
+      | 'findByEmail'
+      | 'verifyPassword'
+      | 'updateRefreshToken'
+      | 'updateLastLogin'
+      | 'verifyRefreshToken'
+    >
+  >;
+  let _tokenService: jest.Mocked<
+    Pick<
+      TokenService,
+      'generateTokens' | 'generateAccessToken' | 'verifyAndDecode'
+    >
+  >;
 
   const mockUsersService = {
     create: jest.fn(),
@@ -44,8 +59,8 @@ describe('AuthService', () => {
     }).compile();
 
     service = module.get<AuthService>(AuthService);
-    usersService = module.get(UsersService);
-    tokenService = module.get(TokenService);
+    _usersService = module.get(UsersService);
+    _tokenService = module.get(TokenService);
     jest.clearAllMocks();
     mockUsersService.updateRefreshToken.mockResolvedValue(undefined);
     mockUsersService.updateLastLogin.mockResolvedValue(undefined);
@@ -80,9 +95,16 @@ describe('AuthService', () => {
         passwordConfirm: 'password',
       });
 
-      expect(mockUsersService.create).toHaveBeenCalledWith('user', 'test@example.com', 'password');
+      expect(mockUsersService.create).toHaveBeenCalledWith(
+        'user',
+        'test@example.com',
+        'password',
+      );
       expect(mockTokenService.generateTokens).toHaveBeenCalledWith(user.id);
-      expect(mockUsersService.updateRefreshToken).toHaveBeenCalledWith(user.id, 'refresh.token');
+      expect(mockUsersService.updateRefreshToken).toHaveBeenCalledWith(
+        user.id,
+        'refresh.token',
+      );
     });
 
     it('returns AuthResponseDto with user and tokens', async () => {
@@ -126,7 +148,10 @@ describe('AuthService', () => {
       mockUsersService.findByEmail.mockResolvedValue(user);
       mockUsersService.verifyPassword.mockResolvedValue(true);
 
-      const result = await service.login({ email: user.email, password: 'correctpass' });
+      const result = await service.login({
+        email: user.email,
+        password: 'correctpass',
+      });
 
       expect(result).toHaveProperty('user');
       expect(result.tokens.access_token).toBe('access.token');
@@ -135,7 +160,11 @@ describe('AuthService', () => {
 
   describe('refreshToken', () => {
     it('throws UnauthorizedException when refresh token is invalid', async () => {
-      mockTokenService.verifyAndDecode.mockReturnValue({ sub: 'user-1', iat: 0, exp: 0 });
+      mockTokenService.verifyAndDecode.mockReturnValue({
+        sub: 'user-1',
+        iat: 0,
+        exp: 0,
+      });
       mockUsersService.verifyRefreshToken.mockResolvedValue(false);
 
       await expect(service.refreshToken('bad.refresh.token')).rejects.toThrow(
@@ -144,7 +173,11 @@ describe('AuthService', () => {
     });
 
     it('returns new access_token when refresh token is valid', async () => {
-      mockTokenService.verifyAndDecode.mockReturnValue({ sub: 'user-1', iat: 0, exp: 0 });
+      mockTokenService.verifyAndDecode.mockReturnValue({
+        sub: 'user-1',
+        iat: 0,
+        exp: 0,
+      });
       mockUsersService.verifyRefreshToken.mockResolvedValue(true);
 
       const result = await service.refreshToken('valid.refresh.token');
@@ -156,7 +189,10 @@ describe('AuthService', () => {
   describe('logout', () => {
     it('calls updateRefreshToken with null to clear the token', async () => {
       await service.logout('user-id-1');
-      expect(mockUsersService.updateRefreshToken).toHaveBeenCalledWith('user-id-1', null);
+      expect(mockUsersService.updateRefreshToken).toHaveBeenCalledWith(
+        'user-id-1',
+        null,
+      );
     });
   });
 });

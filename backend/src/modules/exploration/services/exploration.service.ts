@@ -72,7 +72,9 @@ export class ExplorationService {
 
     await this.explorationRepository.save(exploration);
 
-    const newAreaPercent = newArea ? this.calculateNewAreas(user.exploration_percent) : 0;
+    const newAreaPercent = newArea
+      ? this.calculateNewAreas(user.exploration_percent)
+      : 0;
     const xpEarned = Math.floor(newAreaPercent * BASE_XP_EXPLORATION);
 
     const newExplorationPercent = Math.min(
@@ -229,7 +231,11 @@ export class ExplorationService {
 
       const newPercent = Math.min(activeCount * AREA_INCREMENT_PER_POINT, 100);
       if (newPercent !== Number(user.exploration_percent)) {
-        await this.usersService.updateExplorationStats(user.id, newPercent, user.total_xp);
+        await this.usersService.updateExplorationStats(
+          user.id,
+          newPercent,
+          user.total_xp,
+        );
       }
     }
   }
@@ -240,7 +246,11 @@ export class ExplorationService {
     return cutoff;
   }
 
-  private async isNewArea(userId: string, latitude: number, longitude: number): Promise<boolean> {
+  private async isNewArea(
+    userId: string,
+    latitude: number,
+    longitude: number,
+  ): Promise<boolean> {
     const count = await this.explorationRepository
       .createQueryBuilder('e')
       .where('e.user_id = :userId', { userId })

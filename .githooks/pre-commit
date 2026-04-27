@@ -1,43 +1,67 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-FRONTEND_DIR="$(git rev-parse --show-toplevel)/frontend"
+ROOT="$(git rev-parse --show-toplevel)"
+FRONTEND_DIR="$ROOT/frontend"
+BACKEND_DIR="$ROOT/backend"
 
-# Check if any .dart files are staged
 STAGED_DART=$(git diff --cached --name-only --diff-filter=ACMR | grep '\.dart$' || true)
-if [ -z "$STAGED_DART" ]; then
-  exit 0
-fi
+STAGED_TS=$(git diff --cached --name-only --diff-filter=ACMR | grep '^backend/.*\.ts$' || true)
 
-echo "🔍 [pre-commit] Running Flutter checks on frontend/..."
+# ── Backend lint ────────────────────────────────────────────────────────────
+if [ -n "$STAGED_TS" ]; then
+  echo "🔍 [pre-commit] Running backend lint..."
 
-# --- dart format ---
-echo "  → dart format ."
-(cd "$FRONTEND_DIR" && dart format .)
-
-# Re-stage any files that dart format modified (only previously-staged files)
-while IFS= read -r file; do
-  if [ -f "$file" ]; then
-    git add "$file"
+  echo "  → pnpm run lint"
+  if ! (cd "$BACKEND_DIR" && pnpm run lint); then
+    echo ""
+    echo "❌ ESLint failed. Fix the issues above before committing."
+    exit 1
   fi
-done <<< "$(git diff --cached --name-only --diff-filter=ACMR | grep '\.dart$' || true)"
 
-# Additionally re-stage files that dart format touched but weren't originally staged
-FORMATTED=$(git diff --name-only | grep '\.dart$' || true)
-if [ -n "$FORMATTED" ]; then
-  echo "  ↺  Re-staging dart format changes:"
+  # Re-stage any files that --fix auto-corrected
+  FIXED=$(git diff --name-only | grep '^backend/.*\.ts$' || true)
+  if [ -n "$FIXED" ]; then
+    echo "  ↺  Re-staging ESLint auto-fixes:"
+    while IFS= read -r file; do
+      echo "     $file"
+      git add "$file"
+    done <<< "$FIXED"
+  fi
+
+  echo "✅ Backend lint passed."
+fi
+
+# ── Frontend checks ─────────────────────────────────────────────────────────
+if [ -n "$STAGED_DART" ]; then
+  echo "🔍 [pre-commit] Running Flutter checks on frontend/..."
+
+  echo "  → dart format ."
+  (cd "$FRONTEND_DIR" && dart format .)
+
+  # Re-stage dart files that dart format modified (originally staged)
   while IFS= read -r file; do
-    echo "     $file"
-    git add "$file"
-  done <<< "$FORMATTED"
-fi
+    if [ -f "$file" ]; then
+      git add "$file"
+    fi
+  done <<< "$(git diff --cached --name-only --diff-filter=ACMR | grep '\.dart$' || true)"
 
-# --- flutter analyze ---
-echo "  → flutter analyze"
-if ! (cd "$FRONTEND_DIR" && flutter analyze --no-fatal-infos); then
-  echo ""
-  echo "❌ flutter analyze failed. Fix the issues above before committing."
-  exit 1
-fi
+  # Re-stage any additional files dart format touched
+  FORMATTED=$(git diff --name-only | grep '\.dart$' || true)
+  if [ -n "$FORMATTED" ]; then
+    echo "  ↺  Re-staging dart format changes:"
+    while IFS= read -r file; do
+      echo "     $file"
+      git add "$file"
+    done <<< "$FORMATTED"
+  fi
 
-echo "✅ Flutter checks passed."
+  echo "  → flutter analyze"
+  if ! (cd "$FRONTEND_DIR" && flutter analyze --no-fatal-infos); then
+    echo ""
+    echo "❌ flutter analyze failed. Fix the issues above before committing."
+    exit 1
+  fi
+
+  echo "✅ Flutter checks passed."
+fi
