@@ -185,16 +185,14 @@ Authorization: Bearer {access_token}
 
 ### Obtener Mapa de Exploración
 ```http
-GET /exploration/map?lat=40.4168&lng=-3.7038&zoom=15
+GET /exploration/map?lat=40.4168&lng=-3.7038&radius=5000
 Authorization: Bearer {access_token}
 ```
 
 **Parámetros Query**:
 - `lat`: Latitud (requerido)
 - `lng`: Longitud (requerido)
-- `zoom`: Nivel de zoom (1-20, default=15)
-- `include_fog`: Incluir capas de niebla (default=true)
-- `include_pois`: Incluir puntos de interés (default=true)
+- `radius`: Radio de búsqueda en metros (default=5000)
 
 **Respuesta 200**:
 ```json
@@ -226,6 +224,54 @@ Authorization: Bearer {access_token}
 
 ---
 
+### Obtener Último Punto Explorado
+```http
+GET /exploration/last
+Authorization: Bearer {access_token}
+```
+
+**Respuesta 200**:
+```json
+{
+  "id": "exp-uuid",
+  "latitude": 40.4168,
+  "longitude": -3.7038,
+  "accuracy_meters": 12,
+  "speed_kmh": 2.1,
+  "explored_at": "2026-04-29T10:00:00Z"
+}
+```
+
+---
+
+### Historial de Exploración
+```http
+GET /exploration/history?limit=20&offset=0
+Authorization: Bearer {access_token}
+```
+
+**Parámetros Query**:
+- `limit`: Resultados por página (default=20)
+- `offset`: Paginación (default=0)
+
+**Respuesta 200**: Array de puntos explorados paginados
+
+---
+
+### Estadísticas de Exploración
+```http
+GET /exploration/stats?start=2026-04-01&end=2026-04-29
+Authorization: Bearer {access_token}
+```
+
+**Parámetros Query**:
+- `start`: Fecha inicio (ISO 8601)
+- `end`: Fecha fin (ISO 8601)
+
+**Respuesta 200**: Estadísticas de exploración en el rango de fechas
+
+---
+
 ### Descargar Tiles de Mapa
 ```http
 GET /map/tiles/{z}/{x}/{y}.png
@@ -248,15 +294,32 @@ Authorization: Bearer {access_token} (opcional para offline)
 
 ### Listar Tesoros Cercanos
 ```http
-GET /treasures?lat=40.4168&lng=-3.7038&radius=500
-Authorization: Bearer {access_token}
+GET /treasures/nearby?latitude=40.4168&longitude=-3.7038&radius=500
 ```
 
 **Parámetros Query**:
-- `lat`, `lng`: Centro (requerido)
-- `radius`: Radio en metros (default=1000, max=5000)
-- `status`: Filtrar por estado (ACTIVE, DEPLETED, ARCHIVED)
-- `rarity`: Filtrar por rareza
+- `latitude`, `longitude`: Centro (requerido)
+- `radius`: Radio en metros (default=5000)
+
+---
+
+### Datos de Radar
+```http
+GET /treasures/radar?latitude=40.4168&longitude=-3.7038
+Authorization: Bearer {access_token}
+```
+
+Retorna tesoros con distancia y bearing para la interfaz de radar.
+
+---
+
+### Estadísticas de Claims del Usuario
+```http
+GET /treasures/stats/claims
+Authorization: Bearer {access_token}
+```
+
+**Respuesta 200**: Estadísticas de tesoros reclamados por el usuario autenticado.
 
 **Respuesta 200**:
 ```json
@@ -445,7 +508,47 @@ Authorization: Bearer {access_token}
 
 ---
 
-## 4. Ranking (Ranking Endpoints)
+## 4. Medallas (Medal Endpoints)
+
+### Obtener Todas las Medallas
+```http
+GET /medals
+Authorization: Bearer {access_token}
+```
+
+**Respuesta 200**: Lista de todas las medallas disponibles con estado de desbloqueo para el usuario autenticado.
+
+```json
+{
+  "medals": [
+    {
+      "id": "medal-uuid",
+      "key": "FIRST_STEPS",
+      "name": "Primeros Pasos",
+      "description": "Registrar tu primera exploración",
+      "rarity": "COMMON",
+      "category": "EXPLORATION",
+      "xp_reward": 50,
+      "unlocked": true,
+      "unlocked_at": "2026-04-20T10:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+### Obtener Mis Medallas Desbloqueadas
+```http
+GET /medals/my
+Authorization: Bearer {access_token}
+```
+
+**Respuesta 200**: Solo las medallas ya desbloqueadas por el usuario.
+
+---
+
+## 5. Ranking (Ranking Endpoints)
 
 ### Ranking Global
 ```http
@@ -557,7 +660,9 @@ Authorization: Bearer {access_token}
 
 ---
 
-## 5. Perfil de Usuario (User Endpoints)
+## 6. Perfil de Usuario (User Endpoints — pendiente implementación)
+
+> **Nota**: El módulo `users` en el backend tiene servicio pero aún no tiene controller. Los endpoints de esta sección están definidos en la documentación pero no están implementados. Se implementarán en Phase 8.
 
 ### Obtener Mi Perfil
 ```http
@@ -683,7 +788,7 @@ Authorization: Bearer {access_token}
 
 ---
 
-## 6. Amigos (Friends Endpoints)
+## 7. Amigos (Friends Endpoints — pendiente implementación)
 
 ### Enviar Solicitud de Amistad
 ```http
@@ -744,7 +849,7 @@ Authorization: Bearer {access_token}
 
 ---
 
-## 7. Códigos de Estado HTTP
+## 8. Códigos de Estado HTTP
 
 | Código | Significado | Ejemplo |
 |--------|-------------|---------|
@@ -762,7 +867,7 @@ Authorization: Bearer {access_token}
 
 ---
 
-## 8. Ejemplo de Uso Completo
+## 9. Ejemplo de Uso Completo
 
 ```javascript
 // 1. Registrarse

@@ -63,6 +63,19 @@ Para detalles específicos sobre cada característica, consulta:
 - [Gestión de Privacidad](./features/privacy-settings.md)
 - [El Consejo de Exploradores](./features/community-landmarks.md)
 
+## Estado del Proyecto
+
+| Fase | Descripción | Estado |
+|------|-------------|--------|
+| Fase 1 | Setup & Infraestructura | ✅ Completada |
+| Fase 2 | Autenticación (JWT) | ✅ Completada |
+| Fase 3 | Mapas & Exploración (Fog of War) | ✅ Completada |
+| Fase 4 | Búsqueda de Tesoros & Radar | ✅ Completada |
+| Fase 5 | Sistema de Ranking | ✅ Completada |
+| Fase 6 | Hitos Comunitarios & Votación | ✅ Completada |
+| Fase 7 | Medallas & Gamificación | ✅ Completada |
+| Fase 8 | Testing, Redis, Offline Mode | ⏳ Pendiente |
+
 ## Arquitectura Técnica
 
 Para información sobre la estructura del código y arquitectura:
@@ -70,6 +83,7 @@ Para información sobre la estructura del código y arquitectura:
 - [Arquitectura del Proyecto](./technical/architecture.md)
 - [Guía de Configuración](./technical/setup.md)
 - [API Referencias](./technical/api-reference.md)
+- [Despliegue en Railway](./technical/railway-deployment.md)
 
 ## Primeros Pasos
 

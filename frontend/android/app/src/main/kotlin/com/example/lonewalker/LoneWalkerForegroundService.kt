@@ -3,6 +3,7 @@ package com.example.lonewalker
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.content.pm.ServiceInfo
@@ -34,6 +35,16 @@ class LoneWalkerForegroundService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     private fun buildNotification(): Notification {
+        val intent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+
         val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Notification.Builder(this, CHANNEL_ID)
         } else {
@@ -45,6 +56,7 @@ class LoneWalkerForegroundService : Service() {
             .setContentText("Registrando tu exploración")
             .setSmallIcon(android.R.drawable.ic_menu_compass)
             .setOngoing(true)
+            .setContentIntent(pendingIntent)
             .build()
     }
 

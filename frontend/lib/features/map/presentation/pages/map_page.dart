@@ -29,6 +29,7 @@ class _MapPageState extends State<MapPage> {
   double currentZoom = AppConfig.mapDefaultZoom;
   final _cameraNotifier = _CameraNotifier();
   Set<Marker> _landmarkMarkers = {};
+  bool _isSendingEnabled = true;
 
   @override
   void initState() {
@@ -56,9 +57,17 @@ class _MapPageState extends State<MapPage> {
         title: const Text('LoneWalker Map'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: Icon(
+              _isSendingEnabled ? Icons.sensors : Icons.sensors_off,
+              color: _isSendingEnabled ? Colors.greenAccent : Colors.redAccent,
+            ),
+            tooltip:
+                _isSendingEnabled ? 'Pausar envío GPS' : 'Reanudar envío GPS',
             onPressed: () {
-              context.read<MapBloc>().add(const RefreshMapEvent());
+              setState(() => _isSendingEnabled = !_isSendingEnabled);
+              context.read<MapBloc>().add(
+                    ToggleExplorationSendingEvent(isEnabled: _isSendingEnabled),
+                  );
             },
           ),
         ],
@@ -108,6 +117,15 @@ class _MapPageState extends State<MapPage> {
                   LatLng(state.location.latitude, state.location.longitude),
                 ),
               );
+            } else if (state is ExplorationRegistered) {
+              mapController?.animateCamera(
+                CameraUpdate.newLatLng(
+                  LatLng(
+                    state.userLocation.latitude,
+                    state.userLocation.longitude,
+                  ),
+                ),
+              );
             } else if (state is SpeedLimitExceeded) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -140,6 +158,10 @@ class _MapPageState extends State<MapPage> {
               // Google Maps
               Positioned.fill(
                 child: BlocBuilder<MapBloc, MapState>(
+                  buildWhen: (prev, curr) =>
+                      prev is MapInitial ||
+                      prev is MapLoading ||
+                      curr is MapError,
                   builder: (context, state) {
                     if (state is MapInitial || state is MapLoading) {
                       return const Center(

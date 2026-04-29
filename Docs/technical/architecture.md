@@ -38,37 +38,34 @@ LoneWalker sigue una arquitectura moderna de cliente-servidor con soporte para m
 └─────────────────────────────────────────────────┘
 ```
 
-## 2. Stack Tecnológico Recomendado
+## 2. Stack Tecnológico
 
 ### Frontend
 ```
-Framework: Flutter (multiplataforma) o React Native
-Estado: BLoC/Riverpod (Flutter) o Redux/Zustand (RN)
-Mapas: Google Maps SDK + Mapbox (alternativa)
-GPS: Geolocator + Sensors
-BD Local: SQLite + Drift (ORM)
-Autenticación: Firebase Auth
-Notificaciones: Firebase Cloud Messaging
+Framework: Flutter 3.10+ (iOS + Android)
+Estado: BLoC (flutter_bloc ^8.1.0)
+Mapas: Google Maps SDK (google_maps_flutter ^2.5.0)
+GPS: Geolocator + Sensors (foreground service en Android)
+BD Local: SQLite + Drift (dependencia instalada, integración pendiente Phase 8)
+Autenticación: JWT propio vía backend NestJS
+Notificaciones: Firebase Cloud Messaging (dependencia instalada, pendiente integración)
 ```
 
 ### Backend
 ```
-Runtime: Node.js con Express o Python con FastAPI
-Base Datos: PostgreSQL (ubicación con PostGIS)
-Cache: Redis (rankings, sesiones)
-Search: Elasticsearch (búsqueda de usuarios)
-Almacenamiento: AWS S3 (fotos, archivos .STL)
-Realtime: Socket.io (actualizaciones en vivo)
-Autenticación: JWT + Refresh Tokens
+Runtime: Node.js 18+ con NestJS (TypeScript)
+Base Datos: PostgreSQL 14+ con PostGIS
+Cache: Redis 7+ (dependencia instalada, integración pendiente Phase 8)
+ORM: TypeORM con migraciones
+Autenticación: JWT HS256 + Passport.js (1h access / 7d refresh)
+API Docs: Swagger en /api/docs
 ```
 
 ### DevOps
 ```
+Hosting: Railway.app
 Containerización: Docker
-Orquestación: Kubernetes o Docker Compose
-CI/CD: GitHub Actions / GitLab CI
-Monitoreo: Prometheus + Grafana
-Logs: ELK Stack o Datadog
+CI/CD: GitHub Actions + Railway autodeploy
 ```
 
 ## 3. Estructura de Carpetas (Recomendada)
@@ -108,43 +105,24 @@ lib/
     └── fonts/
 ```
 
-### Backend
+### Backend (NestJS)
 ```
 src/
+├── main.ts                  # Bootstrap (puerto 3000, prefijo api/v1, Swagger)
+├── app.module.ts
 ├── config/
-│   ├── database.js
-│   ├── cache.js
-│   └── env.js
-├── routes/
-│   ├── auth.js
-│   ├── users.js
-│   ├── map.js
-│   ├── treasures.js
-│   └── ranking.js
-├── controllers/
-│   ├── authController.js
-│   ├── mapController.js
-│   └── treasureController.js
-├── services/
-│   ├── userService.js
-│   ├── mapService.js
-│   ├── rankingService.js
-│   └── notificationService.js
-├── models/
-│   ├── User.js
-│   ├── Exploration.js
-│   ├── Treasure.js
-│   └── Ranking.js
-├── middleware/
-│   ├── auth.js
-│   └── validation.js
-├── utils/
-│   ├── logger.js
-│   ├── gps.js
-│   └── validators.js
-└── tests/
-    ├── unit/
-    └── integration/
+│   └── database.config.ts
+├── common/
+│   └── constants/           # geo, auth, app, validation, error-messages
+├── modules/
+│   ├── auth/                # JWT + Passport, login/register/refresh/logout
+│   ├── users/               # Entidad usuario (sin controller aún)
+│   ├── exploration/         # Fog-of-war, PostGIS queries
+│   ├── treasures/           # Radar, claim, wall-of-fame
+│   ├── landmarks/           # Propuestas comunitarias y votación
+│   ├── ranking/             # Rankings global, weekly, district
+│   └── medals/              # Sistema de logros
+└── migrations/
 ```
 
 ## 4. Flujo de Datos
@@ -320,48 +298,67 @@ CREATE TABLE rankings (
 );
 ```
 
-## 6. API Endpoints Principales
+## 6. API Endpoints Implementados
 
 ### Autenticación
 ```
 POST   /api/v1/auth/register      - Crear cuenta
 POST   /api/v1/auth/login         - Iniciar sesión
 POST   /api/v1/auth/refresh       - Renovar JWT
-POST   /api/v1/auth/logout        - Cerrar sesión
+POST   /api/v1/auth/logout        - Cerrar sesión (requiere JWT)
+GET    /api/v1/auth/verify        - Verificar token (requiere JWT)
 ```
 
-### Mapa y Exploración
+### Exploración
 ```
-GET    /api/v1/map/tiles/:z/:x/:y - Descargar tiles de mapa
-POST   /api/v1/exploration        - Registrar posición explorada
-GET    /api/v1/exploration/progress - Obtener porcentaje exploración
-GET    /api/v1/exploration/map    - Obtener mapa de exploración
+POST   /api/v1/exploration              - Registrar punto explorado (requiere JWT)
+GET    /api/v1/exploration/progress     - Porcentaje de exploración (requiere JWT)
+GET    /api/v1/exploration/map          - Fog-of-war ?lat=&lng=&radius= (requiere JWT)
+GET    /api/v1/exploration/last         - Último punto registrado (requiere JWT)
+GET    /api/v1/exploration/history      - Historial paginado (requiere JWT)
+GET    /api/v1/exploration/stats        - Estadísticas por fecha (requiere JWT)
 ```
 
 ### Tesoros
 ```
-GET    /api/v1/treasures          - Listar tesoros cercanos
-GET    /api/v1/treasures/:id      - Detalles del tesoro
-POST   /api/v1/treasures          - Crear tesoro (Maker)
-POST   /api/v1/treasures/:id/claim - Reclamar tesoro
-GET    /api/v1/treasures/:id/wall - Muro de fama del tesoro
+POST   /api/v1/treasures                - Crear tesoro (requiere JWT)
+GET    /api/v1/treasures/nearby         - Tesoros cercanos ?lat=&lng=&radius=
+GET    /api/v1/treasures/radar          - Datos de radar (requiere JWT)
+GET    /api/v1/treasures/:id            - Detalles del tesoro
+POST   /api/v1/treasures/:id/claim      - Reclamar tesoro (requiere JWT)
+GET    /api/v1/treasures/:id/wall-of-fame - Muro de fama
+GET    /api/v1/treasures/stats/claims   - Estadísticas de claims (requiere JWT)
 ```
 
 ### Ranking
 ```
-GET    /api/v1/ranking/global     - Ranking global
-GET    /api/v1/ranking/district/:id - Ranking del distrito
-GET    /api/v1/ranking/weekly     - Ranking semanal
-GET    /api/v1/ranking/position   - Tu posición actual
+GET    /api/v1/ranking/global           - Ranking global (requiere JWT)
+GET    /api/v1/ranking/weekly           - Ranking semanal (requiere JWT)
+GET    /api/v1/ranking/district/:id     - Ranking por distrito (requiere JWT)
+GET    /api/v1/ranking/position         - Tu posición actual (requiere JWT)
 ```
 
-### Perfil de Usuario
+### Hitos Comunitarios
 ```
-GET    /api/v1/users/me           - Obtener mi perfil
-PUT    /api/v1/users/me           - Actualizar perfil
-GET    /api/v1/users/:id          - Ver perfil público
-POST   /api/v1/users/me/friends   - Solicitar amistad
-GET    /api/v1/users/me/medals    - Mis medallas
+POST   /api/v1/landmarks                - Proponer hito (requiere JWT)
+GET    /api/v1/landmarks                - Hitos en votación (requiere JWT)
+GET    /api/v1/landmarks/approved       - Hitos aprobados ?lat=&lng=&radius=
+GET    /api/v1/landmarks/:id            - Detalles de hito (requiere JWT)
+POST   /api/v1/landmarks/:id/votes      - Votar en hito (requiere JWT)
+GET    /api/v1/landmarks/:id/comments   - Comentarios del hito
+```
+
+### Medallas
+```
+GET    /api/v1/medals                   - Todas las medallas con estado unlock (requiere JWT)
+GET    /api/v1/medals/my                - Solo medallas desbloqueadas (requiere JWT)
+```
+
+### Pendiente de implementación (Phase 8)
+```
+GET    /api/v1/users/me           - El módulo users no tiene controller aún
+PUT    /api/v1/users/me           - Pendiente
+GET    /api/v1/users/:id          - Pendiente
 ```
 
 ## 7. Seguridad

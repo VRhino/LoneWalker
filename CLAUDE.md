@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **LoneWalker** is a GPS-based exploration gamification mobile app (NestJS backend + Flutter frontend). Users explore cities to clear a "Fog of War" map, hunt for treasures with a radar system, and compete in rankings.
 
-**Current state**: Phase 4 complete (Auth, Maps, Exploration, Treasure Hunt). Phase 5+ (Landmarks, Rankings, Achievements) is next.
+**Current state**: Phase 7 complete (Auth, Maps, Exploration, Treasure Hunt, Ranking, Landmarks, Medals). Phase 8 (Testing & Integration with Redis caching, offline mode, and fog degradation) is next.
 
 ## Commands
 
@@ -51,9 +51,12 @@ docker-compose down                      # Stop all
 
 Feature-modular structure under `backend/src/modules/`:
 - `auth/` — JWT + Passport strategy, login/register, refresh tokens
-- `users/` — Profile management
-- `exploration/` — Fog-of-war tracking, tile clearing, PostGIS spatial queries
+- `users/` — Profile management (service only, no controller yet)
+- `exploration/` — Fog-of-war tracking, PostGIS spatial queries
 - `treasures/` — Treasure placement, radar proximity, claim validation
+- `landmarks/` — Community landmark proposals and voting system
+- `ranking/` — Global, weekly, and district leaderboards
+- `medals/` — Achievement definitions and unlock tracking
 
 Each module follows NestJS conventions: `*.module.ts`, `*.service.ts`, `*.controller.ts`, `*.entity.ts`, `*.dto.ts`.
 
@@ -63,8 +66,11 @@ Each module follows NestJS conventions: `*.module.ts`, `*.service.ts`, `*.contro
 
 Clean architecture per feature under `frontend/lib/features/`:
 - `auth/` — Login/register screens and BLoC
-- `map/` — Google Maps integration, exploration overlay
-- `treasures/` — Radar UI, claim flow
+- `map/` — Google Maps integration, exploration overlay, fog-of-war
+- `treasure/` — Radar UI, claim flow
+- `landmarks/` — Landmark proposals, voting, detail view
+- `ranking/` — Global, weekly leaderboards
+- `profile/` — Medal gallery
 
 Each feature follows: `data/` (remote datasource, models) → `domain/` (entities, repository interfaces) → `presentation/` (BLoC events/states, pages, widgets).
 
@@ -73,8 +79,8 @@ Each feature follows: `data/` (remote datasource, models) → `domain/` (entitie
 ### Data Layer
 
 - **PostgreSQL 14+** with PostGIS extension for geospatial queries (exploration tiles, treasure proximity)
-- **Redis 7+** for session caching and rankings
-- **SQLite (Drift)** on device for offline-first exploration data
+- **Redis 7+** — dependency installed, integration pending (Phase 8)
+- **SQLite (Drift)** — dependency installed, offline sync pending (Phase 8)
 - **TypeORM** with entity-based ORM; `synchronize: true` in dev only — use migrations in production
 
 ### Auth Flow
@@ -83,7 +89,7 @@ JWT (`HS256`, 1h access / 7d refresh). Backend guards use Passport. Custom `@Cur
 
 ### Exploration Flow
 
-GPS position → velocity check (>20 km/h blocked) → 75m radius cleared → local SQLite update → server sync when online.
+GPS position → velocity check (>20 km/h blocked) → GPS point registered (15m FOW radius per point) → server sync when online. Offline mode and local SQLite sync are pending implementation (Phase 8).
 
 ### Treasure Hunt Flow
 

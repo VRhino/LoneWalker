@@ -48,7 +48,22 @@
       "Bash(railway connect *)",
       "Bash(railway run *)",
       "Bash(railway domain *)",
-      "Bash(flutter run *)"
+      "Bash(flutter run *)",
+      "Bash(grep -E \"\\\\.\\(dart\\)$\")",
+      "Bash(flutter devices *)",
+      "Bash(echo \"PID: $!\")",
+      "Bash(adb logcat *)",
+      "Bash(adb devices *)",
+      "PowerShell(adb devices *)",
+      "Bash(where flutter *)",
+      "Bash(flutter --version)",
+      "Bash(C:/Users/VRINO/Desarrollo/flutter/bin/cache/dart-sdk/bin/dart pub *)",
+      "Bash(/c/Users/VRINO/AppData/Local/Android/Sdk/platform-tools/adb.exe logcat *)",
+      "Bash(grep -A2 \"name: geolocator$\" /c/Users/VRINO/Desarrollo/LoneWalker/frontend/pubspec.lock)",
+      "Bash(grep -A5 \"name: geolocator$\" /c/Users/VRINO/Desarrollo/LoneWalker/frontend/pubspec.lock)",
+      "Bash(grep -A5 \"name: geolocator_android$\" /c/Users/VRINO/Desarrollo/LoneWalker/frontend/pubspec.lock)",
+      "Bash(/c/Users/VRINO/AppData/Local/Android/Sdk/platform-tools/adb.exe shell *)",
+      "Bash(grep -E \"\\\\.dart$\")"
     ]
   }
 }

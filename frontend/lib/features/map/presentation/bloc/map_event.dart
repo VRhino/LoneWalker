@@ -50,3 +50,11 @@ class LoadProgressEvent extends MapEvent {
 class RefreshMapEvent extends MapEvent {
   const RefreshMapEvent();
 }
+
+class ToggleExplorationSendingEvent extends MapEvent {
+  final bool isEnabled;
+  const ToggleExplorationSendingEvent({required this.isEnabled});
+
+  @override
+  List<Object?> get props => [isEnabled];
+}

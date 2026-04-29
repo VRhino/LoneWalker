@@ -37,7 +37,7 @@ Se ha completado la documentación comprehensiva en `Docs/`. Ahora se requiere i
 ```
 🔧 Backend:   Node.js 18+ + NestJS (TypeScript) + PostgreSQL + Redis
 📱 Frontend:  Flutter 3.10+ (iOS + Android)
-☁️  Hosting:   Google Cloud Platform (GCP)
+☁️  Hosting:   Railway.app
 🐳 DevOps:    Docker + GitHub Actions
 ```
 
@@ -60,24 +60,22 @@ Testing:          Jest
 ```
 Framework:        Flutter 3.10+
 Lenguaje:         Dart
-State Management: BLoC + Riverpod
-Mapas:            Google Maps SDK + Mapbox
+State Management: BLoC (flutter_bloc ^8.1.0)
+Mapas:            Google Maps SDK (google_maps_flutter ^2.5.0)
 Geolocalización:  Geolocator + Sensors
-BD Local:         SQLite + Drift (ORM)
-Autenticación:    Firebase Auth
-Push:             Firebase Cloud Messaging
-Testing:          Flutter test + Mockito
+BD Local:         SQLite + Drift (ORM) — pendiente integración Phase 8
+Autenticación:    JWT propio (backend NestJS)
+Push:             Firebase Cloud Messaging — pendiente integración
+Testing:          Flutter test + Mockito + bloc_test
 ```
 
-#### Google Cloud Platform
+#### Railway.app (Hosting Actual)
 ```
-Servidor Backend:  Cloud Run (contenido Docker)
-Base de Datos:     Cloud SQL (PostgreSQL 14)
-Cache:             Redis Enterprise
-Storage:           Cloud Storage (fotos, .STL)
-DNS:               Cloud DNS
-Monitoring:        Cloud Monitoring + Cloud Logging
-CI/CD:             Cloud Build (integración con GitHub)
+Servidor Backend:  Railway (contenedor Docker)
+Base de Datos:     PostgreSQL con PostGIS (Railway plugin)
+Cache:             Redis — pendiente integración (Phase 8)
+Storage:           Pendiente definir (AWS S3 / GCS)
+CI/CD:             GitHub Actions + Railway autodeploy
 ```
 
 ### Requisitos Previos
@@ -109,8 +107,9 @@ pgAdmin (database management)
 
 ---
 
-### FASE 1: Setup Inicial e Infraestructura
+### FASE 1: Setup Inicial e Infraestructura ✅
 **Duración**: Semana 1-2  
+**Estado**: COMPLETADA  
 **Objetivo**: Estructura base, repositorio, entorno de desarrollo
 
 #### 1.1 Repositorio Git
@@ -255,8 +254,9 @@ docker-compose up -d
 
 ---
 
-### FASE 2: Autenticación
+### FASE 2: Autenticación ✅
 **Duración**: Semana 2-3  
+**Estado**: COMPLETADA  
 **Objetivo**: Sistema de auth robusto con JWT
 
 #### 2.1 Backend - Módulo de Autenticación
@@ -387,8 +387,9 @@ lib/features/auth/
 
 ---
 
-### FASE 3: Core - Sistema de Mapas y Exploración
+### FASE 3: Core - Sistema de Mapas y Exploración ✅
 **Duración**: Semana 3-4  
+**Estado**: COMPLETADA  
 **Objetivo**: Base de exploración con Fog of War
 
 #### 3.1 Backend - Módulo Exploración
@@ -507,8 +508,9 @@ lib/features/map/
 
 ---
 
-### FASE 4: Búsqueda de Tesoros
+### FASE 4: Búsqueda de Tesoros ✅
 **Duración**: Semana 4-5  
+**Estado**: COMPLETADA  
 **Objetivo**: Sistema de tesoros con radar y validación GPS
 
 #### 4.1 Backend - Módulo Tesoros
@@ -672,8 +674,9 @@ lib/features/treasure/
 
 ---
 
-### FASE 5: Sistema de Ranking
+### FASE 5: Sistema de Ranking ✅
 **Duración**: Semana 5-6  
+**Estado**: COMPLETADA  
 **Objetivo**: Ranking social con privacidad
 
 #### 5.1 Backend - Módulo Ranking
@@ -801,8 +804,9 @@ lib/features/ranking/
 
 ---
 
-### FASE 6: Sistema Comunitario - Hitos
+### FASE 6: Sistema Comunitario - Hitos ✅
 **Duración**: Semana 6-7  
+**Estado**: COMPLETADA  
 **Objetivo**: Votación de hitos con curación social
 
 #### 6.1 Backend - Módulo Landmarks
@@ -993,8 +997,9 @@ lib/features/landmarks/
 
 ---
 
-### FASE 7: Medallas y Gamificación
+### FASE 7: Medallas y Gamificación ✅
 **Duración**: Semana 7-8  
+**Estado**: COMPLETADA  
 **Objetivo**: Sistema de recompensas completo
 
 #### 7.1 Backend - Módulo Medallas
@@ -1104,8 +1109,9 @@ Servicio que verifica automáticamente si usuario ha desbloqueado medalla
 
 ---
 
-### FASE 8: Testing e Integración
+### FASE 8: Testing e Integración ⏳
 **Duración**: Semana 8-9  
+**Estado**: PENDIENTE — incluye integración de Redis, modo offline (SQLite/Drift), lógica de degradación de fog, y cobertura de tests 80%+  
 **Objetivo**: Cobertura de tests completa e integración end-to-end
 
 #### 8.1 Backend - Test Suite

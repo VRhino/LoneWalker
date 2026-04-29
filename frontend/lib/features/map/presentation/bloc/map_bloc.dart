@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../config/app_config.dart';
@@ -17,6 +18,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   List<ExploredArea> _lastExploredAreas = [];
   ExplorationStats? _lastStats;
   StreamSubscription<Position>? _gpsSub;
+  bool _isSendingEnabled = true;
 
   MapBloc({
     required this.remoteDataSource,
@@ -27,6 +29,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     on<LoadFogEvent>(_onLoadFog);
     on<LoadProgressEvent>(_onLoadProgress);
     on<RefreshMapEvent>(_onRefreshMap);
+    on<ToggleExplorationSendingEvent>(_onToggleSending);
 
     _gpsSub = locationService.positionStream.listen(
       (position) {
@@ -114,13 +117,18 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       accuracy: event.accuracy,
     );
 
-    if (_lastStats != null) {
-      emit(LocationUpdated(
-        location: newLocation,
-        stats: _lastStats!,
-        exploredAreas: _lastExploredAreas,
-      ));
-    }
+    emit(LocationUpdated(
+      location: newLocation,
+      stats: _lastStats ??
+          const ExplorationStats(
+            explorationPercent: 0,
+            totalXp: 0,
+            newAreasCleared: 0,
+            xpEarned: 0,
+            districts: [],
+          ),
+      exploredAreas: _lastExploredAreas,
+    ));
 
     if (event.speed > AppConfig.speedLimitKmh) {
       emit(SpeedLimitExceeded(
@@ -137,6 +145,8 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       ));
       return;
     }
+
+    if (!_isSendingEnabled) return;
 
     try {
       final stats = await remoteDataSource.registerExploration(
@@ -162,7 +172,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         exploredAreas: _lastExploredAreas,
       ));
     } catch (e) {
-      emit(MapError(message: e.toString().replaceFirst('Exception: ', '')));
+      debugPrint('[MapBloc] exploration sync failed: $e');
     }
   }
 
@@ -219,6 +229,13 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     } catch (e) {
       emit(MapError(message: e.toString().replaceFirst('Exception: ', '')));
     }
+  }
+
+  void _onToggleSending(
+    ToggleExplorationSendingEvent event,
+    Emitter<MapState> emit,
+  ) {
+    _isSendingEnabled = event.isEnabled;
   }
 
   Future<void> _onRefreshMap(
