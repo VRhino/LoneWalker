@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../config/app_config.dart';
+import '../../../../core/services/location_service.dart';
 import '../../data/datasources/map_remote_datasource.dart';
 import '../../data/models/map_models.dart';
 import '../../domain/entities/map_state.dart';
@@ -9,13 +12,40 @@ import 'map_state.dart';
 
 class MapBloc extends Bloc<MapEvent, MapState> {
   final MapRemoteDataSource remoteDataSource;
+  final LocationService locationService;
 
-  MapBloc({required this.remoteDataSource}) : super(const MapInitial()) {
+  List<ExploredArea> _lastExploredAreas = [];
+  ExplorationStats? _lastStats;
+  StreamSubscription<Position>? _gpsSub;
+
+  MapBloc({
+    required this.remoteDataSource,
+    required this.locationService,
+  }) : super(const MapInitial()) {
     on<InitMapEvent>(_onInitMap);
     on<UpdateLocationEvent>(_onUpdateLocation);
     on<LoadFogEvent>(_onLoadFog);
     on<LoadProgressEvent>(_onLoadProgress);
     on<RefreshMapEvent>(_onRefreshMap);
+
+    _gpsSub = locationService.positionStream.listen(
+      (position) {
+        add(UpdateLocationEvent(
+          latitude: position.latitude,
+          longitude: position.longitude,
+          accuracy: position.accuracy,
+          speed: position.speed * 3.6,
+        ));
+      },
+      onError: (_) {},
+      cancelOnError: false,
+    );
+  }
+
+  @override
+  Future<void> close() {
+    _gpsSub?.cancel();
+    return super.close();
   }
 
   List<ExploredArea> _parseExploredAreas(Map<String, dynamic> mapData) {
@@ -34,31 +64,24 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     emit(const MapLoading());
 
     try {
-      // Request location permission
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
+      final granted = await locationService.requestPermission();
+      if (!granted) throw Exception('Location permission denied');
 
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        throw Exception('Location permission denied');
-      }
-
-      // Get current position
+      // getCurrentPosition primero: establece sesión de ubicación activa
+      // antes de iniciar el foreground service (requerido en Android 14+)
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
         timeLimit: AppConfig.positionRequestTimeout,
       );
 
-      // Load map data
+      locationService.startTracking();
+
       final mapData = await remoteDataSource.getMapWithFog(
         latitude: position.latitude,
         longitude: position.longitude,
         radius: AppConfig.defaultSearchRadiusMeters.toDouble(),
       );
 
-      // Load progress
       final stats = await remoteDataSource.getExplorationProgress();
 
       final userLocation = MapLocationModel(
@@ -67,11 +90,14 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         accuracy: position.accuracy,
       );
 
+      _lastExploredAreas = _parseExploredAreas(mapData);
+      _lastStats = stats;
+
       emit(MapLoaded(
         userLocation: userLocation,
         explorationStats: stats,
         mapData: mapData,
-        exploredAreas: _parseExploredAreas(mapData),
+        exploredAreas: _lastExploredAreas,
       ));
     } catch (e) {
       emit(MapError(message: e.toString().replaceFirst('Exception: ', '')));
@@ -82,26 +108,37 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     UpdateLocationEvent event,
     Emitter<MapState> emit,
   ) async {
+    final newLocation = MapLocationModel(
+      latitude: event.latitude,
+      longitude: event.longitude,
+      accuracy: event.accuracy,
+    );
+
+    if (_lastStats != null) {
+      emit(LocationUpdated(
+        location: newLocation,
+        stats: _lastStats!,
+        exploredAreas: _lastExploredAreas,
+      ));
+    }
+
+    if (event.speed > AppConfig.speedLimitKmh) {
+      emit(SpeedLimitExceeded(
+        currentSpeed: event.speed,
+        speedLimit: AppConfig.speedLimitKmh,
+      ));
+      return;
+    }
+
+    if (event.accuracy > AppConfig.gpsAccuracyThreshold) {
+      emit(GPSAccuracyWarning(
+        accuracy: event.accuracy,
+        requiredAccuracy: AppConfig.gpsAccuracyThreshold,
+      ));
+      return;
+    }
+
     try {
-      // Check speed limit
-      if (event.speed > AppConfig.speedLimitKmh) {
-        emit(SpeedLimitExceeded(
-          currentSpeed: event.speed,
-          speedLimit: AppConfig.speedLimitKmh,
-        ));
-        return;
-      }
-
-      // Check GPS accuracy
-      if (event.accuracy > AppConfig.gpsAccuracyThreshold) {
-        emit(GPSAccuracyWarning(
-          accuracy: event.accuracy,
-          requiredAccuracy: AppConfig.gpsAccuracyThreshold,
-        ));
-        return;
-      }
-
-      // Register exploration
       final stats = await remoteDataSource.registerExploration(
         latitude: event.latitude,
         longitude: event.longitude,
@@ -109,26 +146,20 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         speed: event.speed,
       );
 
-      final prevAreas = (state is MapLoaded)
-          ? (state as MapLoaded).exploredAreas
-          : <ExploredArea>[];
-      final userLocation = MapLocationModel(
-        latitude: event.latitude,
-        longitude: event.longitude,
-        accuracy: event.accuracy,
-      );
       final newPoint = ExploredAreaModel(
         latitude: event.latitude,
         longitude: event.longitude,
         exploredAt: DateTime.now(),
       );
+      _lastExploredAreas = [..._lastExploredAreas, newPoint];
+      _lastStats = stats;
 
       emit(ExplorationRegistered(
         stats: stats,
         xpEarned: stats.xpEarned,
         newAreasCleared: stats.newAreasCleared,
-        userLocation: userLocation,
-        exploredAreas: [...prevAreas, newPoint],
+        userLocation: newLocation,
+        exploredAreas: _lastExploredAreas,
       ));
     } catch (e) {
       emit(MapError(message: e.toString().replaceFirst('Exception: ', '')));
@@ -154,11 +185,14 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         accuracy: AppConfig.defaultGpsAccuracyEstimate,
       );
 
+      _lastExploredAreas = _parseExploredAreas(mapData);
+      _lastStats = stats;
+
       emit(MapLoaded(
         userLocation: userLocation,
         explorationStats: stats,
         mapData: mapData,
-        exploredAreas: _parseExploredAreas(mapData),
+        exploredAreas: _lastExploredAreas,
       ));
     } catch (e) {
       emit(MapError(message: e.toString().replaceFirst('Exception: ', '')));
@@ -174,6 +208,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
 
       if (state is MapLoaded) {
         final mapLoaded = state as MapLoaded;
+        _lastStats = stats;
         emit(MapLoaded(
           userLocation: mapLoaded.userLocation,
           explorationStats: stats,
@@ -209,11 +244,14 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         accuracy: position.accuracy,
       );
 
+      _lastExploredAreas = _parseExploredAreas(mapData);
+      _lastStats = stats;
+
       emit(MapLoaded(
         userLocation: userLocation,
         explorationStats: stats,
         mapData: mapData,
-        exploredAreas: _parseExploredAreas(mapData),
+        exploredAreas: _lastExploredAreas,
       ));
     } catch (e) {
       emit(MapError(message: e.toString().replaceFirst('Exception: ', '')));

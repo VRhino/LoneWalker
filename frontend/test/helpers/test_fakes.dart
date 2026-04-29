@@ -1,5 +1,9 @@
+import 'dart:async';
+
+import 'package:geolocator/geolocator.dart';
 import 'package:lonewalker/core/network/api_client.dart';
 import 'package:lonewalker/core/network/token_manager.dart';
+import 'package:lonewalker/core/services/location_service.dart';
 import 'package:lonewalker/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:lonewalker/features/auth/data/models/user_model.dart';
 import 'package:lonewalker/features/map/data/datasources/map_remote_datasource.dart';
@@ -249,6 +253,33 @@ class FakeTreasureRemoteDataSource implements TreasureRemoteDataSource {
           byRarity: {TreasureRarity.common: 5},
         );
   }
+}
+
+// ─── Fake Location Service ────────────────────────────────────────────────────
+
+class FakeLocationService extends LocationService {
+  final _controller = StreamController<Position>.broadcast();
+
+  FakeLocationService() : super.forTesting();
+
+  @override
+  Stream<Position> get positionStream => _controller.stream;
+
+  @override
+  Future<bool> requestPermission() async => true;
+
+  @override
+  void startTracking() {}
+
+  @override
+  void stopTracking() {}
+
+  @override
+  bool get isTracking => false;
+
+  void emitPosition(Position position) => _controller.add(position);
+
+  void dispose() => _controller.close();
 }
 
 // ─── Fake Map DataSource ──────────────────────────────────────────────────────

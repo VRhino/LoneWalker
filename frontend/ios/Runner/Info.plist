@@ -66,5 +66,13 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>LoneWalker necesita tu ubicación para limpiar la niebla del mapa mientras exploras.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>LoneWalker necesita tu ubicación en todo momento para registrar tu exploración aunque cambies de app o bloquees la pantalla.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
 </dict>
 </plist>

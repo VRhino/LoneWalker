@@ -13,6 +13,7 @@ import 'features/auth/presentation/pages/register_page.dart';
 import 'features/landmarks/data/datasources/landmark_remote_datasource.dart';
 import 'features/landmarks/presentation/bloc/landmark_bloc.dart';
 import 'features/landmarks/presentation/pages/landmarks_page.dart';
+import 'core/services/location_service.dart';
 import 'features/map/data/datasources/map_remote_datasource.dart';
 import 'features/map/presentation/bloc/map_bloc.dart';
 import 'features/map/presentation/pages/map_page.dart';
@@ -50,6 +51,7 @@ class MyApp extends StatelessWidget {
         BlocProvider(
           create: (_) => MapBloc(
             remoteDataSource: MapRemoteDataSource(apiClient: apiClient),
+            locationService: LocationService.instance,
           ),
         ),
         BlocProvider(

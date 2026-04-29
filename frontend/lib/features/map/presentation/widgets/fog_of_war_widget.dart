@@ -32,7 +32,9 @@ class _FogOfWarWidgetState extends State<FogOfWarWidget> {
   void initState() {
     super.initState();
     widget.cameraNotifier.addListener(_computeOffsets);
-    _computeOffsets();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _computeOffsets();
+    });
   }
 
   @override

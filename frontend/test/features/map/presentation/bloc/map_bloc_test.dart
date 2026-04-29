@@ -9,16 +9,20 @@ import '../../../../helpers/test_fakes.dart';
 
 void main() {
   late FakeMapRemoteDataSource fakeDataSource;
+  late FakeLocationService fakeLocationService;
 
   setUp(() {
     fakeDataSource = FakeMapRemoteDataSource();
+    fakeLocationService = FakeLocationService();
   });
 
   group('MapBloc', () {
     group('UpdateLocationEvent', () {
       blocTest<MapBloc, MapState>(
         'emite [SpeedLimitExceeded] cuando velocidad supera el límite (20 km/h)',
-        build: () => MapBloc(remoteDataSource: fakeDataSource),
+        build: () => MapBloc(
+            remoteDataSource: fakeDataSource,
+            locationService: fakeLocationService),
         act: (b) => b.add(const UpdateLocationEvent(
           latitude: 40.4168,
           longitude: -3.7038,
@@ -36,7 +40,9 @@ void main() {
 
       blocTest<MapBloc, MapState>(
         'SpeedLimitExceeded contiene el límite de velocidad correcto',
-        build: () => MapBloc(remoteDataSource: fakeDataSource),
+        build: () => MapBloc(
+            remoteDataSource: fakeDataSource,
+            locationService: fakeLocationService),
         act: (b) => b.add(const UpdateLocationEvent(
           latitude: 40.4168,
           longitude: -3.7038,
@@ -51,7 +57,9 @@ void main() {
 
       blocTest<MapBloc, MapState>(
         'emite [GPSAccuracyWarning] cuando precisión GPS es insuficiente (>50m)',
-        build: () => MapBloc(remoteDataSource: fakeDataSource),
+        build: () => MapBloc(
+            remoteDataSource: fakeDataSource,
+            locationService: fakeLocationService),
         act: (b) => b.add(const UpdateLocationEvent(
           latitude: 40.4168,
           longitude: -3.7038,
@@ -65,7 +73,9 @@ void main() {
 
       blocTest<MapBloc, MapState>(
         'emite [ExplorationRegistered] cuando velocidad y GPS son válidos',
-        build: () => MapBloc(remoteDataSource: fakeDataSource),
+        build: () => MapBloc(
+            remoteDataSource: fakeDataSource,
+            locationService: fakeLocationService),
         act: (b) => b.add(const UpdateLocationEvent(
           latitude: 40.4168,
           longitude: -3.7038,
@@ -83,7 +93,9 @@ void main() {
         setUp: () {
           fakeDataSource.errorToThrow = Exception('Server error');
         },
-        build: () => MapBloc(remoteDataSource: fakeDataSource),
+        build: () => MapBloc(
+            remoteDataSource: fakeDataSource,
+            locationService: fakeLocationService),
         act: (b) => b.add(const UpdateLocationEvent(
           latitude: 40.4168,
           longitude: -3.7038,
@@ -97,7 +109,9 @@ void main() {
     group('LoadFogEvent', () {
       blocTest<MapBloc, MapState>(
         'emite [MapLoaded] con datos del mapa y estadísticas',
-        build: () => MapBloc(remoteDataSource: fakeDataSource),
+        build: () => MapBloc(
+            remoteDataSource: fakeDataSource,
+            locationService: fakeLocationService),
         act: (b) => b.add(const LoadFogEvent(
           latitude: 40.4168,
           longitude: -3.7038,
@@ -114,7 +128,9 @@ void main() {
 
       blocTest<MapBloc, MapState>(
         'MapLoaded contiene la ubicación del usuario',
-        build: () => MapBloc(remoteDataSource: fakeDataSource),
+        build: () => MapBloc(
+            remoteDataSource: fakeDataSource,
+            locationService: fakeLocationService),
         act: (b) => b.add(const LoadFogEvent(
           latitude: 40.4168,
           longitude: -3.7038,
@@ -134,7 +150,9 @@ void main() {
         setUp: () {
           fakeDataSource.errorToThrow = Exception('Network error');
         },
-        build: () => MapBloc(remoteDataSource: fakeDataSource),
+        build: () => MapBloc(
+            remoteDataSource: fakeDataSource,
+            locationService: fakeLocationService),
         act: (b) => b.add(const LoadFogEvent(
           latitude: 40.4168,
           longitude: -3.7038,
@@ -156,7 +174,9 @@ void main() {
             districts: [],
           );
         },
-        build: () => MapBloc(remoteDataSource: fakeDataSource),
+        build: () => MapBloc(
+            remoteDataSource: fakeDataSource,
+            locationService: fakeLocationService),
         seed: () => const MapLoaded(
           userLocation: MapLocationModel(
             latitude: 40.4168,
@@ -179,7 +199,9 @@ void main() {
 
       blocTest<MapBloc, MapState>(
         'no emite estados si el estado actual no es MapLoaded',
-        build: () => MapBloc(remoteDataSource: fakeDataSource),
+        build: () => MapBloc(
+            remoteDataSource: fakeDataSource,
+            locationService: fakeLocationService),
         act: (b) => b.add(const LoadProgressEvent()),
         expect: () => [],
       );

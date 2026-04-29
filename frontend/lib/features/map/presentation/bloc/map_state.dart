@@ -57,14 +57,16 @@ class ExplorationRegistered extends MapState {
 class LocationUpdated extends MapState {
   final MapLocation location;
   final ExplorationStats stats;
+  final List<ExploredArea> exploredAreas;
 
   const LocationUpdated({
     required this.location,
     required this.stats,
+    required this.exploredAreas,
   });
 
   @override
-  List<Object?> get props => [location, stats];
+  List<Object?> get props => [location, stats, exploredAreas];
 }
 
 class SpeedLimitExceeded extends MapState {
