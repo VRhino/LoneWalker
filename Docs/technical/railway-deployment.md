@@ -168,3 +168,6 @@ Cada vez que hagas `git push` a la rama `main`, Railway detecta el cambio y rede
 
 **CORS error desde la app Flutter**
 → `CORS_ORIGIN` no incluye el origen exacto desde donde la app hace las peticiones. Añade la URL que falta separada por coma.
+
+**500 en `POST /exploration` — `unknown GeoJSON type` en los logs de PostgreSQL**
+→ TypeORM genera `ST_GeomFromGeoJSON($6)` para columnas `geometry`, por lo que el valor debe ser GeoJSON (`{"type":"Point","coordinates":[lng,lat]}`), no WKT (`POINT(lng lat)`). Verifica que `buildGeoJsonPoint` en `geo.constants.ts` retorna `JSON.stringify(...)` y redespliega.

@@ -20,7 +20,7 @@ import {
 import {
   GPS_ACCURACY_THRESHOLD_M,
   DEFAULT_SEARCH_RADIUS_M,
-  buildWktPoint,
+  buildGeoJsonPoint,
 } from '../../common/constants/geo.constants';
 import { GeoUtils } from '../../common/utils/geo.utils';
 import { ERROR_MESSAGES } from '../../common/constants/error-messages.constants';
@@ -63,7 +63,7 @@ export class TreasuresService {
       creator_id: userId,
       ...createTreasureDto,
       current_uses: 0,
-      location: buildWktPoint(
+      location: buildGeoJsonPoint(
         createTreasureDto.longitude,
         createTreasureDto.latitude,
       ),

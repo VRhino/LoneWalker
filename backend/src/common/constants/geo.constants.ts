@@ -10,6 +10,6 @@ export const WGS84_LNG_MAX = 180;
 export const FOG_OF_WAR_RADIUS_M = 15;
 export const EXPLORATION_DEGRADATION_DAYS = 7;
 
-export function buildWktPoint(lng: number, lat: number): string {
-  return `POINT(${lng} ${lat})`;
+export function buildGeoJsonPoint(lng: number, lat: number): string {
+  return JSON.stringify({ type: 'Point', coordinates: [lng, lat] });
 }

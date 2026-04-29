@@ -14,7 +14,7 @@ import { LandmarkDto, LandmarkCommentDto } from './dto/landmark-response.dto';
 import { UsersService } from '../users/users.service';
 import { MedalsService } from '../medals/medals.service';
 import { GeoUtils } from '../../common/utils/geo.utils';
-import { buildWktPoint } from '../../common/constants/geo.constants';
+import { buildGeoJsonPoint } from '../../common/constants/geo.constants';
 
 const VOTING_WINDOW_DAYS = 14;
 const APPROVAL_THRESHOLD = 20;
@@ -65,7 +65,7 @@ export class LandmarksService {
       longitude: dto.longitude,
       photo_url: dto.photo_url ?? null,
       status: LandmarkStatus.VOTING,
-      location: buildWktPoint(dto.longitude, dto.latitude),
+      location: buildGeoJsonPoint(dto.longitude, dto.latitude),
     });
 
     const saved = await this.landmarkRepository.save(landmark);

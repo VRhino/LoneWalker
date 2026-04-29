@@ -12,7 +12,7 @@ import {
   DEFAULT_SEARCH_RADIUS_M,
   FOG_OF_WAR_RADIUS_M,
   EXPLORATION_DEGRADATION_DAYS,
-  buildWktPoint,
+  buildGeoJsonPoint,
 } from '../../../common/constants/geo.constants';
 import { MasteryLevel } from '../../../common/enums/mastery-level.enum';
 
@@ -64,7 +64,7 @@ export class ExplorationService {
       longitude: createExplorationDto.longitude,
       accuracy_meters: accuracy,
       speed_kmh: createExplorationDto.speed_kmh ?? 0,
-      location: buildWktPoint(
+      location: buildGeoJsonPoint(
         createExplorationDto.longitude,
         createExplorationDto.latitude,
       ),
