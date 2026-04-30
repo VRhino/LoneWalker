@@ -9,6 +9,7 @@ import '../bloc/map_event.dart';
 import '../bloc/map_state.dart';
 import '../widgets/fog_of_war_widget.dart';
 import '../../../../core/widgets/background_permission_dialog.dart';
+import '../../../../core/widgets/connectivity_banner.dart';
 import '../../../landmarks/presentation/bloc/landmark_bloc.dart';
 import '../../../landmarks/presentation/bloc/landmark_event.dart';
 import '../../../landmarks/presentation/bloc/landmark_state.dart';
@@ -353,6 +354,14 @@ class _MapPageState extends State<MapPage> {
                     },
                   ),
                 ),
+              ),
+
+              // Connectivity Banner
+              const Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: ConnectivityBanner(),
               ),
 
               // Speed Warning Badge

@@ -10,6 +10,7 @@ import {
   makeTreasure,
   mockQueryBuilder,
 } from '../../common/test/test-factories';
+import { CacheService } from '../../cache/cache.service';
 
 describe('TreasuresService', () => {
   let service: TreasuresService;
@@ -38,6 +39,13 @@ describe('TreasuresService', () => {
     checkAndAwardMedals: jest.fn().mockResolvedValue(undefined),
   };
 
+  const mockCache = {
+    get: jest.fn().mockResolvedValue(null),
+    set: jest.fn().mockResolvedValue(undefined),
+    del: jest.fn().mockResolvedValue(undefined),
+    delPattern: jest.fn().mockResolvedValue(undefined),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -52,6 +60,7 @@ describe('TreasuresService', () => {
         },
         { provide: UsersService, useValue: mockUsersService },
         { provide: MedalsService, useValue: mockMedalsService },
+        { provide: CacheService, useValue: mockCache },
       ],
     }).compile();
 

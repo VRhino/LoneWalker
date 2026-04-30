@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_storage/get_storage.dart';
 import 'config/app_config.dart';
+import 'core/database/app_database.dart';
 import 'core/network/api_client.dart';
+import 'core/services/connectivity_service.dart';
+import 'core/services/location_service.dart';
+import 'core/services/sync_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/data/datasources/auth_remote_datasource.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
@@ -13,7 +17,6 @@ import 'features/auth/presentation/pages/register_page.dart';
 import 'features/landmarks/data/datasources/landmark_remote_datasource.dart';
 import 'features/landmarks/presentation/bloc/landmark_bloc.dart';
 import 'features/landmarks/presentation/pages/landmarks_page.dart';
-import 'core/services/location_service.dart';
 import 'features/map/data/datasources/map_remote_datasource.dart';
 import 'features/map/presentation/bloc/map_bloc.dart';
 import 'features/map/presentation/pages/map_page.dart';
@@ -30,14 +33,34 @@ import 'features/treasure/presentation/pages/treasure_page.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await GetStorage.init();
+  await ConnectivityService.instance.initialize();
+
   final apiClient = ApiClient();
-  runApp(MyApp(apiClient: apiClient));
+  final db = AppDatabase();
+  final mapRemoteDs = MapRemoteDataSource(apiClient: apiClient);
+  final syncService = SyncService(db: db, remoteDataSource: mapRemoteDs);
+
+  runApp(MyApp(
+    apiClient: apiClient,
+    db: db,
+    mapRemoteDs: mapRemoteDs,
+    syncService: syncService,
+  ));
 }
 
 class MyApp extends StatelessWidget {
   final ApiClient apiClient;
+  final AppDatabase db;
+  final MapRemoteDataSource mapRemoteDs;
+  final SyncService syncService;
 
-  const MyApp({super.key, required this.apiClient});
+  const MyApp({
+    super.key,
+    required this.apiClient,
+    required this.db,
+    required this.mapRemoteDs,
+    required this.syncService,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -50,8 +73,11 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (_) => MapBloc(
-            remoteDataSource: MapRemoteDataSource(apiClient: apiClient),
+            remoteDataSource: mapRemoteDs,
             locationService: LocationService.instance,
+            db: db,
+            connectivityService: ConnectivityService.instance,
+            syncService: syncService,
           ),
         ),
         BlocProvider(

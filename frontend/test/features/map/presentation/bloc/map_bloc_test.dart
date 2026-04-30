@@ -19,7 +19,7 @@ void main() {
   group('MapBloc', () {
     group('UpdateLocationEvent', () {
       blocTest<MapBloc, MapState>(
-        'emite [SpeedLimitExceeded] cuando velocidad supera el límite (20 km/h)',
+        'emite [LocationUpdated, SpeedLimitExceeded] cuando velocidad supera el límite (20 km/h)',
         build: () => MapBloc(
             remoteDataSource: fakeDataSource,
             locationService: fakeLocationService),
@@ -30,6 +30,7 @@ void main() {
           speed: 25.0,
         )),
         expect: () => [
+          isA<LocationUpdated>(),
           isA<SpeedLimitExceeded>().having(
             (s) => s.currentSpeed,
             'currentSpeed',
@@ -50,13 +51,14 @@ void main() {
           speed: 30.0,
         )),
         expect: () => [
+          isA<LocationUpdated>(),
           isA<SpeedLimitExceeded>()
               .having((s) => s.speedLimit, 'speedLimit', 20.0),
         ],
       );
 
       blocTest<MapBloc, MapState>(
-        'emite [GPSAccuracyWarning] cuando precisión GPS es insuficiente (>50m)',
+        'emite [LocationUpdated, GPSAccuracyWarning] cuando precisión GPS es insuficiente (>50m)',
         build: () => MapBloc(
             remoteDataSource: fakeDataSource,
             locationService: fakeLocationService),
@@ -67,12 +69,13 @@ void main() {
           speed: 5.0,
         )),
         expect: () => [
+          isA<LocationUpdated>(),
           isA<GPSAccuracyWarning>().having((s) => s.accuracy, 'accuracy', 60.0),
         ],
       );
 
       blocTest<MapBloc, MapState>(
-        'emite [ExplorationRegistered] cuando velocidad y GPS son válidos',
+        'emite [LocationUpdated, ExplorationRegistered] cuando velocidad y GPS son válidos',
         build: () => MapBloc(
             remoteDataSource: fakeDataSource,
             locationService: fakeLocationService),
@@ -83,13 +86,14 @@ void main() {
           speed: 5.0,
         )),
         expect: () => [
+          isA<LocationUpdated>(),
           isA<ExplorationRegistered>()
               .having((s) => s.xpEarned, 'xpEarned', 50),
         ],
       );
 
       blocTest<MapBloc, MapState>(
-        'emite [MapError] cuando falla el registro en el servidor',
+        'solo emite [LocationUpdated] cuando falla el registro y no hay BD offline',
         setUp: () {
           fakeDataSource.errorToThrow = Exception('Server error');
         },
@@ -102,7 +106,7 @@ void main() {
           accuracy: 10.0,
           speed: 5.0,
         )),
-        expect: () => [isA<MapError>()],
+        expect: () => [isA<LocationUpdated>()],
       );
     });
 

@@ -25,7 +25,7 @@ class FogOfWarWidget extends StatefulWidget {
 }
 
 class _FogOfWarWidgetState extends State<FogOfWarWidget> {
-  List<Offset?> _exploredOffsets = [];
+  List<(Offset, double)?> _exploredOffsets = [];
   Offset? _userOffset;
 
   @override
@@ -63,14 +63,14 @@ class _FogOfWarWidgetState extends State<FogOfWarWidget> {
     if (ctrl == null || !mounted) return;
 
     final ratio = MediaQuery.of(context).devicePixelRatio;
-    final offsets = <Offset?>[];
+    final offsets = <(Offset, double)?>[];
 
     for (final area in widget.exploredAreas) {
       try {
         final sc = await ctrl.getScreenCoordinate(
           LatLng(area.latitude, area.longitude),
         );
-        offsets.add(Offset(sc.x / ratio, sc.y / ratio));
+        offsets.add((Offset(sc.x / ratio, sc.y / ratio), area.exploredLevel));
       } catch (_) {
         offsets.add(null);
       }
@@ -97,7 +97,7 @@ class _FogOfWarWidgetState extends State<FogOfWarWidget> {
     return IgnorePointer(
       child: CustomPaint(
         painter: FogOfWarPainter(
-          exploredOffsets: _exploredOffsets,
+          exploredEntries: _exploredOffsets,
           userOffset: _userOffset,
           fogRadius: AppConfig.fogOfWarRadius * (widget.mapZoom / 15.0),
         ),
@@ -108,12 +108,12 @@ class _FogOfWarWidgetState extends State<FogOfWarWidget> {
 }
 
 class FogOfWarPainter extends CustomPainter {
-  final List<Offset?> exploredOffsets;
+  final List<(Offset, double)?> exploredEntries;
   final Offset? userOffset;
   final double fogRadius;
 
   FogOfWarPainter({
-    required this.exploredOffsets,
+    required this.exploredEntries,
     required this.userOffset,
     required this.fogRadius,
   });
@@ -127,15 +127,27 @@ class FogOfWarPainter extends CustomPainter {
       Paint()..color = Colors.black.withValues(alpha: 0.6),
     );
 
-    final clearPaint = Paint()..blendMode = BlendMode.dstOut;
-    for (final offset in exploredOffsets) {
-      if (offset != null) {
-        canvas.drawCircle(offset, fogRadius, clearPaint);
+    for (final entry in exploredEntries) {
+      if (entry != null) {
+        final (offset, level) = entry;
+        canvas.drawCircle(
+          offset,
+          fogRadius,
+          Paint()
+            ..blendMode = BlendMode.dstOut
+            ..color = Colors.white.withValues(alpha: level),
+        );
       }
     }
 
     if (userOffset != null) {
-      canvas.drawCircle(userOffset!, fogRadius, clearPaint);
+      canvas.drawCircle(
+        userOffset!,
+        fogRadius,
+        Paint()
+          ..blendMode = BlendMode.dstOut
+          ..color = Colors.white,
+      );
     }
 
     canvas.restore();
@@ -175,7 +187,7 @@ class FogOfWarPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(FogOfWarPainter oldDelegate) {
-    return oldDelegate.exploredOffsets != exploredOffsets ||
+    return oldDelegate.exploredEntries != exploredEntries ||
         oldDelegate.userOffset != userOffset ||
         oldDelegate.fogRadius != fogRadius;
   }

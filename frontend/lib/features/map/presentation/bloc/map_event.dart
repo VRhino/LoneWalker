@@ -58,3 +58,7 @@ class ToggleExplorationSendingEvent extends MapEvent {
   @override
   List<Object?> get props => [isEnabled];
 }
+
+class SyncPendingExplorationsEvent extends MapEvent {
+  const SyncPendingExplorationsEvent();
+}

@@ -9,6 +9,7 @@ import {
   makeUser,
   mockQueryBuilder,
 } from '../../../common/test/test-factories';
+import { CacheService } from '../../../cache/cache.service';
 
 describe('ExplorationService', () => {
   let service: ExplorationService;
@@ -31,6 +32,13 @@ describe('ExplorationService', () => {
     checkAndAwardMedals: jest.fn().mockResolvedValue(undefined),
   };
 
+  const mockCache = {
+    get: jest.fn().mockResolvedValue(null),
+    set: jest.fn().mockResolvedValue(undefined),
+    del: jest.fn().mockResolvedValue(undefined),
+    delPattern: jest.fn().mockResolvedValue(undefined),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -41,6 +49,7 @@ describe('ExplorationService', () => {
         },
         { provide: UsersService, useValue: mockUsersService },
         { provide: MedalsService, useValue: mockMedalsService },
+        { provide: CacheService, useValue: mockCache },
       ],
     }).compile();
 

@@ -1,5 +1,7 @@
 import '../../domain/entities/map_state.dart';
 
+const double _kBackendLevelScale = 100.0;
+
 class MapLocationModel extends MapLocation {
   const MapLocationModel({
     required super.latitude,
@@ -93,14 +95,16 @@ class ExploredAreaModel extends ExploredArea {
     required super.latitude,
     required super.longitude,
     required super.exploredAt,
+    super.exploredLevel = kFullExploredLevel,
   });
 
-  // Parsea un Feature del GeoJSON FeatureCollection devuelto por GET /exploration/map
-  // Estructura: { geometry: { coordinates: [lng, lat] }, properties: { timestamp: '...' } }
   factory ExploredAreaModel.fromGeoJsonFeature(Map<String, dynamic> feature) {
     final geometry = feature['geometry'] as Map<String, dynamic>;
     final coords = geometry['coordinates'] as List<dynamic>;
     final properties = feature['properties'] as Map<String, dynamic>? ?? {};
+
+    final rawLevel = (properties['explored_level'] as num?)?.toDouble() ??
+        _kBackendLevelScale;
 
     return ExploredAreaModel(
       longitude: (coords[0] as num).toDouble(),
@@ -108,6 +112,8 @@ class ExploredAreaModel extends ExploredArea {
       exploredAt:
           DateTime.tryParse(properties['timestamp']?.toString() ?? '') ??
               DateTime.now(),
+      exploredLevel:
+          (rawLevel / _kBackendLevelScale).clamp(0.0, kFullExploredLevel),
     );
   }
 }

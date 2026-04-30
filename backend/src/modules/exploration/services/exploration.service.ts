@@ -1,10 +1,14 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, MoreThanOrEqual } from 'typeorm';
+import { CacheService } from '../../../cache/cache.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ExplorationEntity } from '../entities/exploration.entity';
 import { CreateExplorationDto } from '../dto/create-exploration.dto';
-import { ExplorationProgressDto } from '../dto/exploration-response.dto';
+import {
+  ExplorationProgressDto,
+  FogOfWarDto,
+} from '../dto/exploration-response.dto';
 import { UsersService } from '../../users/users.service';
 import { MedalsService } from '../../medals/medals.service';
 import {
@@ -12,13 +16,19 @@ import {
   DEFAULT_SEARCH_RADIUS_M,
   FOG_OF_WAR_RADIUS_M,
   EXPLORATION_DEGRADATION_DAYS,
+  EXPLORATION_DEGRADATION_WINDOW_DAYS,
   buildGeoJsonPoint,
 } from '../../../common/constants/geo.constants';
+import { computeExploredLevel } from '../../../common/utils/exploration-level.util';
 import { MasteryLevel } from '../../../common/enums/mastery-level.enum';
 
 const SPEED_LIMIT_KMH = 20;
 const BASE_XP_EXPLORATION = 10;
 const AREA_INCREMENT_PER_POINT = 0.5;
+
+const PROGRESS_TTL = 600; // 10 min — invalidated on new exploration point
+const FOG_MAP_TTL = 1800; // 30 min
+const COORD_PRECISION = 1000; // ~110m grid for fog map cache keys
 
 @Injectable()
 export class ExplorationService {
@@ -27,6 +37,7 @@ export class ExplorationService {
     private explorationRepository: Repository<ExplorationEntity>,
     private usersService: UsersService,
     private medalsService: MedalsService,
+    private cache: CacheService,
   ) {}
 
   async registerExploration(
@@ -91,6 +102,11 @@ export class ExplorationService {
 
     await this.medalsService.checkAndAwardMedals(userId);
 
+    await Promise.all([
+      this.cache.del(`exploration:progress:${userId}`),
+      this.cache.delPattern(`fog:${userId}:*`),
+    ]);
+
     return {
       user_id: userId,
       exploration_percent: newExplorationPercent,
@@ -105,9 +121,13 @@ export class ExplorationService {
   async getExplorationProgress(
     userId: string,
   ): Promise<ExplorationProgressDto> {
+    const cacheKey = `exploration:progress:${userId}`;
+    const cached = await this.cache.get<ExplorationProgressDto>(cacheKey);
+    if (cached) return cached;
+
     const user = await this.usersService.findByIdOrThrow(userId);
 
-    return {
+    const result: ExplorationProgressDto = {
       user_id: userId,
       exploration_percent: user.exploration_percent,
       total_xp: user.total_xp,
@@ -116,6 +136,9 @@ export class ExplorationService {
       fog_updated: false,
       districts_explored: this.getDistrictExploration(),
     };
+
+    await this.cache.set(cacheKey, result, PROGRESS_TTL);
+    return result;
   }
 
   async getMapWithFog(
@@ -124,7 +147,16 @@ export class ExplorationService {
     longitude: number,
     radiusMeters: number = DEFAULT_SEARCH_RADIUS_M,
   ) {
-    const cutoffDate = this.getActiveCutoffDate();
+    const lat = Math.round(latitude * COORD_PRECISION) / COORD_PRECISION;
+    const lng = Math.round(longitude * COORD_PRECISION) / COORD_PRECISION;
+    const cacheKey = `fog:${userId}:${lat}:${lng}:${radiusMeters}`;
+    const cached = await this.cache.get<FogOfWarDto>(cacheKey);
+    if (cached) return cached;
+
+    const mapWindowDays =
+      EXPLORATION_DEGRADATION_DAYS + EXPLORATION_DEGRADATION_WINDOW_DAYS;
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - mapWindowDays);
 
     const explorations = await this.explorationRepository
       .createQueryBuilder('e')
@@ -152,12 +184,13 @@ export class ExplorationService {
       },
       properties: {
         timestamp: exp.e_explored_at,
+        explored_level: computeExploredLevel(exp.e_explored_at),
       },
     }));
 
     const user = await this.usersService.findById(userId);
 
-    return {
+    const result = {
       fog_of_war: {
         type: 'FeatureCollection' as const,
         features,
@@ -166,6 +199,9 @@ export class ExplorationService {
       user_position: { latitude, longitude },
       exploration_percent: user?.exploration_percent ?? 0,
     };
+
+    await this.cache.set(cacheKey, result, FOG_MAP_TTL);
+    return result;
   }
 
   async getLastExploration(userId: string): Promise<ExplorationEntity | null> {

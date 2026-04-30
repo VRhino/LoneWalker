@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
+import { CacheService } from '../../cache/cache.service';
 import {
   TreasureEntity,
   TreasureStatus,
@@ -36,6 +37,11 @@ const WALL_OF_FAME_LIMIT = 50;
 // Stored as a placeholder until real GPS validation timing is implemented
 const GPS_VALIDATION_STUB_MS = 3000;
 
+const NEARBY_TTL = 900; // 15 min — invalidated on claim
+const TREASURE_TTL = 1800; // 30 min
+const WALL_OF_FAME_TTL = 3600; // 1 hour
+const COORD_PRECISION = 10000; // round to ~11m grid for shared cache keys
+
 const XP_BASE_REWARDS: Record<TreasureRarity, number> = {
   [TreasureRarity.COMMON]: 50,
   [TreasureRarity.UNCOMMON]: 75,
@@ -53,6 +59,7 @@ export class TreasuresService {
     private claimRepository: Repository<TreasureClaimEntity>,
     private usersService: UsersService,
     private medalsService: MedalsService,
+    private cache: CacheService,
   ) {}
 
   async createTreasure(
@@ -79,41 +86,67 @@ export class TreasuresService {
     radius: number = DEFAULT_SEARCH_RADIUS_M,
     userId?: string,
   ): Promise<TreasureDto[]> {
-    const treasures = await this.treasureRepository
-      .createQueryBuilder('t')
-      .where(`ST_DWithin(t.location, ST_MakePoint(:lng, :lat), :radius)`, {
-        lat: userLat,
-        lng: userLng,
-        radius,
-      })
-      .andWhere('t.status = :status', { status: TreasureStatus.ACTIVE })
-      .orderBy(`ST_Distance(t.location, ST_MakePoint(:lng, :lat))`, 'ASC')
-      .setParameters({ lat: userLat, lng: userLng })
-      .getMany();
+    const lat = Math.round(userLat * COORD_PRECISION) / COORD_PRECISION;
+    const lng = Math.round(userLng * COORD_PRECISION) / COORD_PRECISION;
+    const cacheKey = `treasures:nearby:${lat}:${lng}:${radius}`;
 
-    // Batch-load claimed status to avoid N+1
-    const claimedIds = new Set<string>();
-    if (userId && treasures.length > 0) {
-      const claims = await this.claimRepository.findBy({
-        user_id: userId,
-        treasure_id: In(treasures.map(t => t.id)),
-      });
-      claims.forEach(c => claimedIds.add(c.treasure_id));
+    let baseDtos = await this.cache.get<TreasureDto[]>(cacheKey);
+
+    if (!baseDtos) {
+      const treasures = await this.treasureRepository
+        .createQueryBuilder('t')
+        .where(`ST_DWithin(t.location, ST_MakePoint(:lng, :lat), :radius)`, {
+          lat: userLat,
+          lng: userLng,
+          radius,
+        })
+        .andWhere('t.status = :status', { status: TreasureStatus.ACTIVE })
+        .orderBy(`ST_Distance(t.location, ST_MakePoint(:lng, :lat))`, 'ASC')
+        .setParameters({ lat: userLat, lng: userLng })
+        .getMany();
+
+      baseDtos = treasures.map(t => this.mapToDtoSync(t, false));
+      await this.cache.set(cacheKey, baseDtos, NEARBY_TTL);
     }
 
-    return treasures.map(t => this.mapToDtoSync(t, claimedIds.has(t.id)));
+    if (!userId || baseDtos.length === 0) return baseDtos;
+
+    // Cheap per-user claimed check — spatial query is already cached above
+    const claims = await this.claimRepository.findBy({
+      user_id: userId,
+      treasure_id: In(baseDtos.map(t => t.id)),
+    });
+    const claimedIds = new Set(claims.map(c => c.treasure_id));
+
+    return baseDtos.map(t => ({ ...t, claimed_by_user: claimedIds.has(t.id) }));
   }
 
   async getTreasureById(
     treasureId: string,
     userId?: string,
   ): Promise<TreasureDto> {
+    const cacheKey = `treasure:${treasureId}`;
+    const cached = await this.cache.get<TreasureDto>(cacheKey);
+
+    if (cached) {
+      if (!userId) return cached;
+      const claimed = !!(await this.claimRepository.findOneBy({
+        user_id: userId,
+        treasure_id: treasureId,
+      }));
+      return { ...cached, claimed_by_user: claimed };
+    }
+
     const treasure = await this.treasureRepository.findOneBy({
       id: treasureId,
     });
     if (!treasure) {
       throw new NotFoundException(ERROR_MESSAGES.TREASURE_NOT_FOUND);
     }
+
+    const baseDto = this.mapToDtoSync(treasure, false);
+    await this.cache.set(cacheKey, baseDto, TREASURE_TTL);
+
     return this.mapToDto(treasure, userId);
   }
 
@@ -230,6 +263,11 @@ export class TreasuresService {
     await this.usersService.addXp(userId, xpEarned);
     await this.medalsService.checkAndAwardMedals(userId);
 
+    await Promise.all([
+      this.cache.del(`treasure:${treasureId}`),
+      this.cache.delPattern('treasures:nearby:*'),
+    ]);
+
     return {
       treasure: this.mapToDtoSync(treasure, true),
       xpEarned,
@@ -240,6 +278,10 @@ export class TreasuresService {
   async getTreasureWallOfFame(
     treasureId: string,
   ): Promise<TreasureWallOfFameDto[]> {
+    const cacheKey = `treasure:wof:${treasureId}`;
+    const cached = await this.cache.get<TreasureWallOfFameDto[]>(cacheKey);
+    if (cached) return cached;
+
     const claims = await this.claimRepository
       .createQueryBuilder('tc')
       .leftJoinAndSelect('tc.user', 'u')
@@ -248,7 +290,7 @@ export class TreasuresService {
       .limit(WALL_OF_FAME_LIMIT)
       .getMany();
 
-    return claims.map(claim => ({
+    const result = claims.map(claim => ({
       id: claim.user.id,
       username: claim.user.username,
       claimed_at: claim.claimed_at,
@@ -256,6 +298,9 @@ export class TreasuresService {
       distance_meters: claim.distance_meters,
       gps_validation_time_ms: claim.gps_validation_time_ms,
     }));
+
+    await this.cache.set(cacheKey, result, WALL_OF_FAME_TTL);
+    return result;
   }
 
   async getTreasureClaimsStats(userId: string): Promise<{

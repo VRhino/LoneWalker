@@ -7,9 +7,17 @@ import { UserEntity } from '../users/entities/user.entity';
 import { TreasureClaimEntity } from '../treasures/entities/treasure-claim.entity';
 import { PrivacyMode } from '../../common/enums/privacy-mode.enum';
 import { makeUser, mockQueryBuilder } from '../../common/test/test-factories';
+import { CacheService } from '../../cache/cache.service';
 
 describe('RankingService', () => {
   let service: RankingService;
+
+  const mockCache = {
+    get: jest.fn().mockResolvedValue(null),
+    set: jest.fn().mockResolvedValue(undefined),
+    del: jest.fn().mockResolvedValue(undefined),
+    delPattern: jest.fn().mockResolvedValue(undefined),
+  };
 
   const mockInsertQb = mockQueryBuilder([]);
 
@@ -58,11 +66,15 @@ describe('RankingService', () => {
           useValue: mockClaimRepo,
         },
         { provide: DataSource, useValue: mockDataSource },
+        { provide: CacheService, useValue: mockCache },
       ],
     }).compile();
 
     service = module.get<RankingService>(RankingService);
     jest.clearAllMocks();
+    mockCache.get.mockResolvedValue(null);
+    mockCache.set.mockResolvedValue(undefined);
+    mockCache.delPattern.mockResolvedValue(undefined);
     mockDataSource.createQueryRunner.mockReturnValue(mockQueryRunner);
     mockQueryRunner.connect.mockResolvedValue(undefined);
     mockQueryRunner.startTransaction.mockResolvedValue(undefined);
@@ -170,6 +182,76 @@ describe('RankingService', () => {
       expect(result.rank).toBe(11); // 10 + 1
       expect(result.score).toBe(0);
       expect(result.total_players).toBe(10);
+    });
+  });
+
+  describe('cache integration', () => {
+    it('getGlobalRanking: returns cache hit without querying the database', async () => {
+      const cachedPayload = {
+        entries: [
+          {
+            rank: 1,
+            user_id: 'u1',
+            username: 'Alice',
+            avatar_url: null,
+            exploration_percent: 80,
+            treasures_found: 10,
+            xp_total: 5000,
+            medals_count: 3,
+            score: 42,
+            is_current_user: false,
+            updated_at: new Date(),
+          },
+        ],
+        total: 1,
+      };
+      mockCache.get.mockResolvedValue(cachedPayload);
+
+      const result = await service.getGlobalRanking('current-user', 1, 50);
+
+      expect(mockCache.get).toHaveBeenCalledWith('ranking:global:1:50');
+      expect(mockRankingRepo.createQueryBuilder).not.toHaveBeenCalled();
+      expect(result.entries[0].user_id).toBe('u1');
+    });
+
+    it('getGlobalRanking: cache miss → queries DB then calls cache.set', async () => {
+      mockCache.get.mockResolvedValue(null);
+      const user = makeUser({ privacy_mode: PrivacyMode.PUBLIC });
+      const entry = {
+        rank: 1,
+        user_id: user.id,
+        user,
+        score: 10,
+        exploration_percent: 20,
+        treasures_found: 3,
+        xp_total: 100,
+        medals_count: 1,
+        updated_at: new Date(),
+      };
+      const qb = mockQueryBuilder([entry]);
+      qb.getManyAndCount.mockResolvedValue([[entry], 1]);
+      mockRankingRepo.createQueryBuilder.mockReturnValue(qb);
+
+      await service.getGlobalRanking('current-user', 1, 50);
+
+      expect(mockRankingRepo.createQueryBuilder).toHaveBeenCalled();
+      expect(mockCache.set).toHaveBeenCalledWith(
+        'ranking:global:1:50',
+        expect.objectContaining({ total: 1 }),
+        3600,
+      );
+    });
+
+    it('calculateAndUpdateRankings: calls cache.delPattern after commit', async () => {
+      const user = makeUser({ is_active: true });
+      mockUserRepo.find.mockResolvedValue([user]);
+      const claimQb = mockQueryBuilder([{ user_id: user.id, count: '0' }]);
+      mockClaimRepo.createQueryBuilder.mockReturnValue(claimQb);
+
+      await service.calculateAndUpdateRankings();
+
+      expect(mockQueryRunner.commitTransaction).toHaveBeenCalled();
+      expect(mockCache.delPattern).toHaveBeenCalledWith('ranking:*');
     });
   });
 });

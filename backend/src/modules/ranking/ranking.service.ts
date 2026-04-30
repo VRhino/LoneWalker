@@ -11,6 +11,10 @@ import {
   RankingListDto,
   UserPositionDto,
 } from './dto/ranking-response.dto';
+import { CacheService } from '../../cache/cache.service';
+
+const RANKING_TTL = 3600; // 1 hour — matches cron recalculation interval
+const USER_POSITION_TTL = 600; // 10 min — changes more often than full ranking
 
 @Injectable()
 export class RankingService {
@@ -24,6 +28,7 @@ export class RankingService {
     @InjectRepository(TreasureClaimEntity)
     private claimRepository: Repository<TreasureClaimEntity>,
     private dataSource: DataSource,
+    private cache: CacheService,
   ) {}
 
   @Cron(CronExpression.EVERY_HOUR)
@@ -98,6 +103,7 @@ export class RankingService {
       }
       await queryRunner.commitTransaction();
       this.logger.log(`Rankings updated for ${scored.length} users`);
+      await this.cache.delPattern('ranking:*');
     } catch (err) {
       await queryRunner.rollbackTransaction();
       this.logger.error('Failed to update rankings', err);
@@ -111,6 +117,24 @@ export class RankingService {
     page: number = 1,
     limit: number = 50,
   ): Promise<RankingListDto> {
+    const cacheKey = `ranking:global:${page}:${limit}`;
+    const cached = await this.cache.get<{
+      entries: RankingEntryDto[];
+      total: number;
+    }>(cacheKey);
+
+    if (cached) {
+      return {
+        ...cached,
+        page,
+        limit,
+        entries: cached.entries.map(e => ({
+          ...e,
+          is_current_user: e.user_id === currentUserId,
+        })),
+      };
+    }
+
     const offset = (page - 1) * limit;
 
     const [entries, total] = await this.rankingRepository
@@ -123,8 +147,14 @@ export class RankingService {
       .take(limit)
       .getManyAndCount();
 
+    const dtos = entries.map(e => this.toDto(e, ''));
+    await this.cache.set(cacheKey, { entries: dtos, total }, RANKING_TTL);
+
     return {
-      entries: entries.map(e => this.toDto(e, currentUserId)),
+      entries: dtos.map(e => ({
+        ...e,
+        is_current_user: e.user_id === currentUserId,
+      })),
       total,
       page,
       limit,
@@ -136,6 +166,24 @@ export class RankingService {
     page: number = 1,
     limit: number = 50,
   ): Promise<RankingListDto> {
+    const cacheKey = `ranking:weekly:${page}:${limit}`;
+    const cached = await this.cache.get<{
+      entries: RankingEntryDto[];
+      total: number;
+    }>(cacheKey);
+
+    if (cached) {
+      return {
+        ...cached,
+        page,
+        limit,
+        entries: cached.entries.map(e => ({
+          ...e,
+          is_current_user: e.user_id === currentUserId,
+        })),
+      };
+    }
+
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
 
@@ -150,8 +198,14 @@ export class RankingService {
       .take(limit)
       .getManyAndCount();
 
+    const dtos = entries.map(e => this.toDto(e, ''));
+    await this.cache.set(cacheKey, { entries: dtos, total }, RANKING_TTL);
+
     return {
-      entries: entries.map(e => this.toDto(e, currentUserId)),
+      entries: dtos.map(e => ({
+        ...e,
+        is_current_user: e.user_id === currentUserId,
+      })),
       total,
       page,
       limit,
@@ -167,11 +221,17 @@ export class RankingService {
   }
 
   async getUserPosition(userId: string): Promise<UserPositionDto> {
+    const cacheKey = `ranking:user:${userId}`;
+    const cached = await this.cache.get<UserPositionDto>(cacheKey);
+    if (cached) return cached;
+
     const total = await this.rankingRepository.count();
 
     const entry = await this.rankingRepository.findOne({
       where: { user_id: userId },
     });
+
+    let result: UserPositionDto;
 
     if (!entry) {
       const user = await this.userRepository.findOne({
@@ -182,7 +242,7 @@ export class RankingService {
         where: { user_id: userId },
       });
 
-      return {
+      result = {
         rank: total + 1,
         score: 0,
         total_players: total,
@@ -191,17 +251,20 @@ export class RankingService {
         xp_total: user?.total_xp ?? 0,
         medals_count: user?.medals_count ?? 0,
       };
+    } else {
+      result = {
+        rank: entry.rank,
+        score: Number(entry.score),
+        total_players: total,
+        exploration_percent: Number(entry.exploration_percent),
+        treasures_found: entry.treasures_found,
+        xp_total: entry.xp_total,
+        medals_count: entry.medals_count,
+      };
     }
 
-    return {
-      rank: entry.rank,
-      score: Number(entry.score),
-      total_players: total,
-      exploration_percent: Number(entry.exploration_percent),
-      treasures_found: entry.treasures_found,
-      xp_total: entry.xp_total,
-      medals_count: entry.medals_count,
-    };
+    await this.cache.set(cacheKey, result, USER_POSITION_TTL);
+    return result;
   }
 
   private computeScore(

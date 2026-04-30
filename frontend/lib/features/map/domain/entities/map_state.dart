@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+const double kFullExploredLevel = 1.0;
+
 class MapLocation extends Equatable {
   final double latitude;
   final double longitude;
@@ -19,15 +21,17 @@ class ExploredArea extends Equatable {
   final double latitude;
   final double longitude;
   final DateTime exploredAt;
+  final double exploredLevel;
 
   const ExploredArea({
     required this.latitude,
     required this.longitude,
     required this.exploredAt,
+    this.exploredLevel = kFullExploredLevel,
   });
 
   @override
-  List<Object?> get props => [latitude, longitude, exploredAt];
+  List<Object?> get props => [latitude, longitude, exploredAt, exploredLevel];
 }
 
 class ExplorationStats extends Equatable {

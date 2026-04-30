@@ -155,6 +155,18 @@ Cada vez que hagas `git push` a la rama `main`, Railway detecta el cambio y rede
 
 ---
 
+## Despliegue manual con Railway CLI
+
+Para deployar desde local sin pasar por GitHub, usar **siempre** desde la raíz del repositorio:
+
+```bash
+railway up backend --path-as-root --service backend
+```
+
+> **Por qué `--path-as-root`**: `railway up` sube siempre el contexto desde la raíz del repositorio git, independientemente del directorio actual. El `Dockerfile` y el `railway.toml` están en `backend/`, por lo que sin este flag Railway usa Railpack (auto-detección) en lugar del Dockerfile y el deploy falla con "Railpack could not determine how to build the app".
+
+---
+
 ## Troubleshooting frecuente
 
 **El deploy falla en el build**
